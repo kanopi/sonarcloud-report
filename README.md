@@ -57,3 +57,12 @@ To build the image from source.
 ```shell
 make build
 ```
+
+## Running full process
+
+Included as part of this is the full process of setting up a local instance of SonarQube and running the scanner on the 
+current codebase.
+
+```shell
+bash <(curl -fsSL https://raw.githubusercontent.com/kanopi/sonarqube-report/main/run.sh) run
+```
