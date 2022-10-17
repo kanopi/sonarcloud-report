@@ -298,22 +298,6 @@ check_requirements()
 check_requirements
 
 case "$1" in
-    run)
-        check_status
-        pull_latest_images
-        start_service
-        change_password
-        update_libraries
-        create_project
-        run_scanner
-        run_report
-
-        if [[ "${CLEANUP}" != "" ]]; then
-            cleanup
-        fi
-
-        echo-green-bg "Completed"
-        ;;
     pull-latest)
         pull_latest_images
         ;;
@@ -345,7 +329,19 @@ case "$1" in
         echo-green-bg "Completed"
         ;;
     *)
-        echo-error "Command not supported"
-        exit 1
+        check_status
+        pull_latest_images
+        start_service
+        change_password
+        update_libraries
+        create_project
+        run_scanner
+        run_report
+
+        if [[ "${CLEANUP}" != "" ]]; then
+            cleanup
+        fi
+
+        echo-green-bg "Completed"
         ;;
 esac
