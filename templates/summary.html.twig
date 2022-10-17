@@ -1,0 +1,48 @@
+{% extends 'template.html.twig' %}
+
+{% block content %}
+<h1>SonarQube Evaluation</h1>
+<div class="panel panel-default">
+    <div class="panel-heading"><h2 style="margin-bottom: 0; margin-top: 0;">Summary</h2></div>
+    <div class="panel-body">
+        <table width="100%">
+            <thead>
+                <tr>
+                    <th rowspan="2" valign="bottom" style="text-align: left;">Project</th>
+                    <th colspan="5" style="text-align: center;">Severities</th>
+                    <th colspan="4" style="text-align: center;">Issue Types</th>
+                    <th rowspan="2" valign="bottom"># of Lines</th>
+                </tr>
+                <tr>
+                    <th style="text-align: center">Blocker</th>
+                    <th style="text-align: center">Critical</th>
+                    <th style="text-align: center">Major</th>
+                    <th style="text-align: center">Minor</th>
+                    <th style="text-align: center">Info</th>
+                    <th style="text-align: center">Code Smell</th>
+                    <th style="text-align: center">Bug</th>
+                    <th style="text-align: center">Vulnerability</th>
+                    <th style="text-align: center">Security Hotspot</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for project in summary %}
+                <tr>
+                    <td style="text-align: left">{{ project.name }}</td>
+                    <td style="text-align: center">{{ project.blocker }}</td>
+                    <td style="text-align: center">{{ project.critical }}</td>
+                    <td style="text-align: center">{{ project.major }}</td>
+                    <td style="text-align: center">{{ project.minor }}</td>
+                    <td style="text-align: center">{{ project.info }}</td>
+                    <td style="text-align: center">{{ project.code_smell }}</td>
+                    <td style="text-align: center">{{ project.bugs }}</td>
+                    <td style="text-align: center">{{ project.vulnerability }}</td>
+                    <td style="text-align: center">{{ project.hotspot }}</td>
+                    <td style="text-align: center">{{ project.lines }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

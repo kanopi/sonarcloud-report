@@ -1,0 +1,6 @@
+/.idea
+/vendor
+/*.pdf
+/reports
+/.env
+/.DS_Store
