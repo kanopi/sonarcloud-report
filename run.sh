@@ -289,6 +289,13 @@ run_report()
         ${SONARQUBE_REPORT_IMAGE}
 }
 
+check_requirements()
+{
+  $(which docker > /dev/null) || if_failed_error "Docker Binary not found"
+  $(which jq > /dev/null) || if_failed_error "jQ Binary not found"
+}
+
+check_requirements
 
 case "$1" in
     run)
