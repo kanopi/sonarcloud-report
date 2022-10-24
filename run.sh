@@ -296,6 +296,7 @@ check_requirements()
 check_requirements
 
 case "$1" in
+    # Individual Commands
     pull-latest)
         pull_latest_images
         ;;
@@ -313,6 +314,12 @@ case "$1" in
         ;;
     change-password)
         change_password
+        ;;
+    # Compound Commands
+    new-project)
+        create_project
+        run_scanner
+        run_report
         ;;
     run-current)
         update_libraries
