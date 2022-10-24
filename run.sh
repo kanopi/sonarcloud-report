@@ -269,7 +269,7 @@ run_scanner()
         sonar-scanner \
         -Dsonar.projectKey=${PROJECT_KEY} \
         -Dsonar.sources=. \
-        -Dsonar.host.url=${SONARQUBE_REMOTE_HOST} \
+        -Dsonar.host.url=${SONARQUBE_CLI_REMOTE_HOST} \
         -Dsonar.login="${USER}" \
         -Dsonar.password="${PASS}" > ${LOG_FILE}
 }
