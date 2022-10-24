@@ -147,9 +147,7 @@ get_sonarqube_status ()
 
 project_exists()
 {
-    echo $(curl -fsSL -u ${USER}:${PASS} \
-            ${HOST}/api/projects/search?projects=${1}
-            | jq -r '.components | length' )
+    echo $(curl -fsSL -u ${USER}:${PASS} ${HOST}/api/projects/search?projects=${1} | jq -r '.components | length' )
 }
 
 pull_latest_images()
