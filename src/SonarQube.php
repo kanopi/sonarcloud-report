@@ -99,7 +99,7 @@ class SonarQube
 
                 // if line isn't set use the textRange attribute
                 if (!isset($issue['line'])) {
-                    $issue['line'] = $issue['textRange']['startLine'];
+                    $issue['line'] = $issue['textRange']['startLine'] ?? '';
                 }
                 $issue['severity_level'] = $this->getSeverityLevel($issue['severity']);
 
