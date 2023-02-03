@@ -43,6 +43,25 @@
             {% endfor %}
             </tbody>
         </table>
+
+        <div>
+            <h3>Issue types</h3>
+            <p>There are three types of issues:</p>
+            <ol>
+                <li><strong>Bug</strong>: A coding mistake that can lead to an error or unexpected behavior at runtime.</li>
+                <li><strong>Vulnerability</strong>: A point in your code that's open to attack.</li>
+                <li><strong>Code Smell</strong>: A maintainability issue that makes your code confusing and difficult to maintain.</li>
+            </ol>
+            <h4>Issue severity</h4>
+            <p>Each issue has one of five severities:</p>
+            <ol>
+                <li><strong>BLOCKER</strong>: Bug with a high probability to impact the behavior of the application in production. For example, a memory leak, or an unclosed JDBC connection are BLOCKERs that <em>must be fixed immediately</em>.</li>
+                <li><strong>CRITICAL</strong>:&nbsp;Either a bug with a low probability to impact the behavior of the application in production or an issue that represents a security flaw. An empty catch block or SQL injection would be a CRITICAL issue. The code <em>must be reviewed immediately</em>.</li>
+                <li><strong>MAJOR</strong>:&nbsp;A quality flaw that can highly impact the developer's productivity. An uncovered piece of code, duplicated blocks, or unused parameters are examples of MAJOR issues.</li>
+                <li><strong>MINOR</strong>:&nbsp;A quality flaw that can slightly impact the developer's productivity. For example, lines should not be too long, and "switch" statements should have at least 3 cases, are both be considered MINOR issues.</li>
+                <li><strong>INFO</strong>:&nbsp;Neither a bug nor a quality flaw, just a finding.</li>
+            </ol>
+        </div>
     </div>
 </div>
 {% endblock %}

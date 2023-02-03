@@ -1,0 +1,71 @@
+{% extends 'template.html.twig' %}
+
+{% block content %}
+<div class="panel panel-default">
+  <div class="panel-heading"><h2 style="margin-bottom: 0; margin-top: 0;">Duplicate Pieces of Code</h2></div>
+  <div class="panel-body">
+
+      <div>
+        <h3>Duplicate Lines</h3>
+        <table width="100%">
+          <thead>
+            <tr>
+                <th width="75%">File</th>
+                <th style="text-align: right">Duplicate<br/>Lines</th>
+                <th style="text-align: right">Duplicate<br/>Lines (%)</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for line in items.lines %}
+            <tr>
+                <td>{{ line.path }}</td>
+                <td style="text-align: right">{{ line.measures.duplicated_lines }}</td>
+                <td style="text-align: right">{{ line.measures.duplicated_lines_density }}%</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div>
+          <h3>Duplicate Blocks</h3>
+          <table width="100%">
+              <thead>
+              <tr>
+                  <th width="75%">File</th>
+                  <th style="text-align: right">Duplicate Blocks</th>
+              </tr>
+              </thead>
+              <tbody>
+              {% for line in items.blocks %}
+                  <tr>
+                      <td>{{ line.path }}</td>
+                      <td style="text-align: right">{{ line.measures.duplicated_blocks }}</td>
+                  </tr>
+              {% endfor %}
+              </tbody>
+          </table>
+      </div>
+
+      <div>
+          <h3>Duplicate Files</h3>
+          <table width="100%">
+              <thead>
+              <tr>
+                  <th width="75%">File</th>
+                  <th style="text-align: right">Duplicate Files</th>
+              </tr>
+              </thead>
+              <tbody>
+              {% for line in items.files %}
+                  <tr>
+                      <td>{{ line.path }}</td>
+                      <td style="text-align: right">{{ line.measures.duplicated_files }}</td>
+                  </tr>
+              {% endfor %}
+              </tbody>
+          </table>
+      </div>
+  </div>
+</div>
+{% endblock %}

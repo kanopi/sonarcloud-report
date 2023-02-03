@@ -18,7 +18,7 @@ RUN set -xe; \
         unzip \
         zip
 
-COPY --from=madnight/alpine-wkhtmltopdf-builder:0.12.5-alpine3.10-2894863267 \
+COPY --from=surnet/alpine-wkhtmltopdf:3.17.0-0.12.6-small \
     /bin/wkhtmltopdf /bin/wkhtmltopdf
 
 ENV SONARQUBE_REPORT_DIR=/mnt/reports/ \

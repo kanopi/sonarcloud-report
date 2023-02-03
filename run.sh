@@ -37,7 +37,7 @@ SERVICE_NAME=${SERVICE_NAME:-sonarqube}
 SONARQUBE_CLI_REMOTE_HOST=${SONARQUBE_CLI_REMOTE_HOST:-"http://sonarqube:${PORT}"}
 
 SONARQUBE_SERVICE_IMAGE="sonarqube:${IMAGE_TAG}"
-SONARQUBE_REPORT_IMAGE="devkteam/sonarqube-report:latest"
+SONARQUBE_REPORT_IMAGE="devkteam/sonarqube-report:${SONARQUBE_REPORT_IMAGE_TAG:-latest}"
 SONARQUBE_CLI_IMAGE="sonarsource/sonar-scanner-cli:latest"
 
 CLEANUP=${CLEANUP}

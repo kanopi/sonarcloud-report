@@ -1,0 +1,89 @@
+{% extends 'template.html.twig' %}
+
+{% block content %}
+
+<div class="break-after">
+    <h2>Security Hotspots</h2>
+    <h3 id="what-is-a-security-hotspot" class="css-cwjz0i e1hs9atk0">What is a security hotspot?</h3>
+    <p>A security hotspot highlights a security-sensitive piece of code that the developer needs to review. Upon review, you'll either find there is no threat or you need to apply a fix to secure the code.</p>
+    <p>Another way of looking at hotspots can be the concept of&nbsp;<a href="https://en.wikipedia.org/wiki/Defense_in_depth_(computing)" class="external-link" target="__blank">Defense in depth (computing)<svg height="12" stroke-linejoin="round" stroke-miterlimit="1.41421" fill-rule="evenodd" clip-rule="evenodd" version="1.1" viewBox="0 0 16 16" width="12" class="css-1o0rfo8 e9vyosc0"><path fill="currentColor" d="M12 9.25v2.5A2.25 2.25 0 0 1 9.75 14h-6.5A2.25 2.25 0 0 1 1 11.75v-6.5A2.25 2.25 0 0 1 3.25 3h5.5c.14 0 .25.11.25.25v.5c0 .14-.11.25-.25.25h-5.5C2.562 4 2 4.563 2 5.25v6.5c0 .688.563 1.25 1.25 1.25h6.5c.688 0 1.25-.563 1.25-1.25v-2.5c0-.14.11-.25.25-.25h.5c.14 0 .25.11.25.25zm3-6.75v4c0 .273-.227.5-.5.5a.497.497 0 0 1-.352-.148l-1.375-1.375L7.68 10.57a.27.27 0 0 1-.18.078.27.27 0 0 1-.18-.078l-.89-.89a.27.27 0 0 1-.078-.18.27.27 0 0 1 .078-.18l5.093-5.093-1.375-1.375A.497.497 0 0 1 10 2.5c0-.273.227-.5.5-.5h4c.273 0 .5.227.5.5z"></path></svg></a>,&nbsp;in which several redundant protection layers are placed in an application so that it becomes more resilient in the event of an attack.</p>
+    <h3 id="vulnerability-or-hotspot" class="css-um5or7 e1hs9atk0">Vulnerability or hotspot?</h3>
+    <p>The main difference between a hotspot and a vulnerability is&nbsp;<em>the need for review</em>&nbsp;before deciding whether to apply a fix:</p>
+    <ul>
+        <li>With a hotspot, a security-sensitive piece of code is highlighted, but the overall application security may not be impacted. It's up to the developer to review the code to determine whether or not a fix is needed to secure the code.</li>
+        <li>With a vulnerability, a problem that impacts the application's security has been discovered and needs to be fixed immediately.</li>
+    </ul>
+    <p>An example of a hotspot is the&nbsp;<a href="https://sonarsource.atlassian.net/browse/RSPEC-2092" class="external-link" target="__blank">RSPEC-2092<svg height="12" stroke-linejoin="round" stroke-miterlimit="1.41421" fill-rule="evenodd" clip-rule="evenodd" version="1.1" viewBox="0 0 16 16" width="12" class="css-1o0rfo8 e9vyosc0"><path fill="currentColor" d="M12 9.25v2.5A2.25 2.25 0 0 1 9.75 14h-6.5A2.25 2.25 0 0 1 1 11.75v-6.5A2.25 2.25 0 0 1 3.25 3h5.5c.14 0 .25.11.25.25v.5c0 .14-.11.25-.25.25h-5.5C2.562 4 2 4.563 2 5.25v6.5c0 .688.563 1.25 1.25 1.25h6.5c.688 0 1.25-.563 1.25-1.25v-2.5c0-.14.11-.25.25-.25h.5c.14 0 .25.11.25.25zm3-6.75v4c0 .273-.227.5-.5.5a.497.497 0 0 1-.352-.148l-1.375-1.375L7.68 10.57a.27.27 0 0 1-.18.078.27.27 0 0 1-.18-.078l-.89-.89a.27.27 0 0 1-.078-.18.27.27 0 0 1 .078-.18l5.093-5.093-1.375-1.375A.497.497 0 0 1 10 2.5c0-.273.227-.5.5-.5h4c.273 0 .5.227.5.5z"></path></svg></a>&nbsp;where the use of&nbsp;a <em>cookie secure flag</em>&nbsp;is recommended to prevent cookies from being sent over non-HTTPS connections. A review is needed in this example because:</p>
+    <ul>
+        <li>HTTPS is the main protection against MITM attacks and so the secure flag is only additional protection in case of some failures of network security.</li>
+        <li>The cookie may be designed to be sent everywhere (non-HTTPS websites included) because it's a tracking cookie or similar.</li>
+    </ul>
+    <p>With hotspots, we try to give some freedom to users and educate them on how to choose the most relevant/appropriate protections depending on the context (for example, budgets and threats).</p>
+    <h3 id="why-are-security-hotspots-important" class="css-um5or7 e1hs9atk0">Why are security hotspots important?</h3>
+    <p>While the need to fix individual hotspots depends on the context, you should view security hotspots as an essential part of improving an application's robustness. The more fixed hotspots there are, the more secure your code is in the event of an attack. Reviewing security hotspots allows you to:</p>
+    <ul>
+        <li><strong>Understand the risk</strong>: Understanding when and why you need to apply a fix in order to reduce an information security risk (threats and impacts).</li>
+        <li><strong>Identify protections</strong>:&nbsp;While reviewing hotspots, you'll see how to avoid writing code that's at risk, determine which fixes are in place, and determine which fixes still need to be implemented to fix the highlighted code.</li>
+        <li><strong>Identify impacts</strong>:&nbsp;With hotspots, you'll learn how to apply fixes to secure your code based on the impact on overall application security. Recommended secure coding practices are included on the hotspots page to assist you during your review.</li>
+    </ul>
+    <h3 id="lifecycle" class="css-um5or7 e1hs9atk0">Lifecycle</h3>
+    <p>Security hotspots have a dedicated lifecycle. To make status changes, the user needs the&nbsp;<strong>Administrator security hotspots</strong>&nbsp;permission level. This permission is enabled by default. Users with the&nbsp;<strong>Browse</strong>&nbsp;permission level can comment on or change the user assigned to a security hotspot.</p>
+    <h3>Statuses</h3>
+    <p>Through the lifecycle, a security hotspot takes one of the following statuses:</p>
+    <ul>
+        <li><strong>To review</strong>:&nbsp;The default status of new security hotspots set by SonarQube. A security hotspot has been reported and needs to be checked.</li>
+        <li><strong>Acknowledged</strong>:&nbsp;A developer has reviewed the security hotspot and a resolution to the highlighted risk is pending. This covers cases where a fix is in progress or where time is needed to determine the next step.</li>
+        <li><strong>Fixed</strong>:&nbsp;A developer has reviewed the security hotspot and applied a fix.</li>
+        <li><strong>Safe</strong>:&nbsp;A developer has reviewed the security hotspot and determined that no change is necessary (for example, because other more relevant protections are already in place).</li>
+    </ul>
+    <h3 id="workflow" class="css-um5or7 e1hs9atk0">Workflow</h3>
+    <p>Follow this workflow to review security hotspots and apply any fixes needed to secure your code.</p>
+    <h3>Review Priority</h3>
+    <p>When SonarQube detects a security hotspot, it's added to the list of security hotspots according to its review priority from high to low. Hotspots with a high review priority are the most likely to contain code that needs to be secured and require your attention first.</p>
+    <p>Review priority is determined by the security category of each security rule. Rules in categories that are ranked high on the OWASP Top 10 and CWE Top 25 standards are considered to have a high review priority. Rules in categories that aren't ranked high or aren't mentioned on the OWASP Top 10 or CWE Top 25 standards are rated as Medium or Low. Please see <a href="/latest/user-guide/rules/security-related-rules/">Security-related rules</a> for more details.</p>
+    <h4>Reviewing Hotspots</h4>
+    <p>When reviewing a hotspot, you should:</p>
+    <ol>
+        <li>Review the&nbsp;<strong>What's the risk?</strong>&nbsp;tab to understand why the security hotspot was raised.</li>
+        <li>From the&nbsp;<strong>Assess the risk</strong>&nbsp;tab, read the&nbsp;<strong>Ask Yourself Whether</strong>&nbsp;section to determine if you need to apply a fix to secure the code highlighted in the Security Hotspot.</li>
+        <li>From the&nbsp;<strong>How can you fix it?</strong>&nbsp;tab, follow the&nbsp;<strong>recommended secure coding practices</strong>&nbsp;to fix your code if you've determined it's unsafe.</li>
+    </ol>
+    <p>After following these steps, set the security hotspot to the appropriate status (see above):&nbsp;<strong>Acknowledged</strong>,&nbsp;<strong>fixed</strong>,&nbsp;or&nbsp;<strong>safe</strong>. If you need another user’s review, you can leave it as&nbsp;<strong>To review</strong>.</p>
+    <h4>Review History</h4>
+    <p>The&nbsp;<strong>Review history</strong>&nbsp;tab shows the history of the security hotspot including the status it's been assigned and any comments the reviewer had regarding the Hotspot.</p>
+    <h3 id="reviewing-hotspots-in-your-ide" class="css-um5or7 e1hs9atk0">Reviewing hotspots in your IDE</h3>
+    <p>Seeing a security hotspot directly in the IDE can help you better understand its context and decide whether it is safe or not. This is the purpose of the&nbsp;<strong>Open in IDE</strong>&nbsp;button that you'll see as an authenticated user.</p>
+    <p>This feature is available to users of:</p>
+    <ul>
+        <li><a href="https://www.sonarsource.com/products/sonarlint/features/vs-code/" class="external-link" target="__blank">SonarLint for VS Code<svg height="12" stroke-linejoin="round" stroke-miterlimit="1.41421" fill-rule="evenodd" clip-rule="evenodd" version="1.1" viewBox="0 0 16 16" width="12" class="css-1o0rfo8 e9vyosc0"><path fill="currentColor" d="M12 9.25v2.5A2.25 2.25 0 0 1 9.75 14h-6.5A2.25 2.25 0 0 1 1 11.75v-6.5A2.25 2.25 0 0 1 3.25 3h5.5c.14 0 .25.11.25.25v.5c0 .14-.11.25-.25.25h-5.5C2.562 4 2 4.563 2 5.25v6.5c0 .688.563 1.25 1.25 1.25h6.5c.688 0 1.25-.563 1.25-1.25v-2.5c0-.14.11-.25.25-.25h.5c.14 0 .25.11.25.25zm3-6.75v4c0 .273-.227.5-.5.5a.497.497 0 0 1-.352-.148l-1.375-1.375L7.68 10.57a.27.27 0 0 1-.18.078.27.27 0 0 1-.18-.078l-.89-.89a.27.27 0 0 1-.078-.18.27.27 0 0 1 .078-.18l5.093-5.093-1.375-1.375A.497.497 0 0 1 10 2.5c0-.273.227-.5.5-.5h4c.273 0 .5.227.5.5z"></path></svg></a>&nbsp;1.20 and above</li>
+        <li><a href="https://www.sonarsource.com/products/sonarlint/features/jetbrains/" class="external-link" target="__blank">SonarLint for IntelliJ<svg height="12" stroke-linejoin="round" stroke-miterlimit="1.41421" fill-rule="evenodd" clip-rule="evenodd" version="1.1" viewBox="0 0 16 16" width="12" class="css-1o0rfo8 e9vyosc0"><path fill="currentColor" d="M12 9.25v2.5A2.25 2.25 0 0 1 9.75 14h-6.5A2.25 2.25 0 0 1 1 11.75v-6.5A2.25 2.25 0 0 1 3.25 3h5.5c.14 0 .25.11.25.25v.5c0 .14-.11.25-.25.25h-5.5C2.562 4 2 4.563 2 5.25v6.5c0 .688.563 1.25 1.25 1.25h6.5c.688 0 1.25-.563 1.25-1.25v-2.5c0-.14.11-.25.25-.25h.5c.14 0 .25.11.25.25zm3-6.75v4c0 .273-.227.5-.5.5a.497.497 0 0 1-.352-.148l-1.375-1.375L7.68 10.57a.27.27 0 0 1-.18.078.27.27 0 0 1-.18-.078l-.89-.89a.27.27 0 0 1-.078-.18.27.27 0 0 1 .078-.18l5.093-5.093-1.375-1.375A.497.497 0 0 1 10 2.5c0-.273.227-.5.5-.5h4c.273 0 .5.227.5.5z"></path></svg></a>&nbsp;4.13 and above</li>
+        <li><a href="https://www.sonarsource.com/products/sonarlint/features/visual-studio/" class="external-link" target="__blank">SonarLint for Visual Studio<svg height="12" stroke-linejoin="round" stroke-miterlimit="1.41421" fill-rule="evenodd" clip-rule="evenodd" version="1.1" viewBox="0 0 16 16" width="12" class="css-1o0rfo8 e9vyosc0"><path fill="currentColor" d="M12 9.25v2.5A2.25 2.25 0 0 1 9.75 14h-6.5A2.25 2.25 0 0 1 1 11.75v-6.5A2.25 2.25 0 0 1 3.25 3h5.5c.14 0 .25.11.25.25v.5c0 .14-.11.25-.25.25h-5.5C2.562 4 2 4.563 2 5.25v6.5c0 .688.563 1.25 1.25 1.25h6.5c.688 0 1.25-.563 1.25-1.25v-2.5c0-.14.11-.25.25-.25h.5c.14 0 .25.11.25.25zm3-6.75v4c0 .273-.227.5-.5.5a.497.497 0 0 1-.352-.148l-1.375-1.375L7.68 10.57a.27.27 0 0 1-.18.078.27.27 0 0 1-.18-.078l-.89-.89a.27.27 0 0 1-.078-.18.27.27 0 0 1 .078-.18l5.093-5.093-1.375-1.375A.497.497 0 0 1 10 2.5c0-.273.227-.5.5-.5h4c.273 0 .5.227.5.5z"></path></svg></a>&nbsp;4.29 and above</li>
+        <li><a href="https://www.sonarsource.com/products/sonarlint/features/eclipse/" class="external-link" target="__blank">SonarLint for Eclipse<svg height="12" stroke-linejoin="round" stroke-miterlimit="1.41421" fill-rule="evenodd" clip-rule="evenodd" version="1.1" viewBox="0 0 16 16" width="12" class="css-1o0rfo8 e9vyosc0"><path fill="currentColor" d="M12 9.25v2.5A2.25 2.25 0 0 1 9.75 14h-6.5A2.25 2.25 0 0 1 1 11.75v-6.5A2.25 2.25 0 0 1 3.25 3h5.5c.14 0 .25.11.25.25v.5c0 .14-.11.25-.25.25h-5.5C2.562 4 2 4.563 2 5.25v6.5c0 .688.563 1.25 1.25 1.25h6.5c.688 0 1.25-.563 1.25-1.25v-2.5c0-.14.11-.25.25-.25h.5c.14 0 .25.11.25.25zm3-6.75v4c0 .273-.227.5-.5.5a.497.497 0 0 1-.352-.148l-1.375-1.375L7.68 10.57a.27.27 0 0 1-.18.078.27.27 0 0 1-.18-.078l-.89-.89a.27.27 0 0 1-.078-.18.27.27 0 0 1 .078-.18l5.093-5.093-1.375-1.375A.497.497 0 0 1 10 2.5c0-.273.227-.5.5-.5h4c.273 0 .5.227.5.5z"></path></svg></a>&nbsp;5.7 and above</li>
+    </ul>
+    <p>The project needs to be open in the appropriate IDE and bound to the server through SonarLint's Connected Mode.</p>
+    <p>Keep in mind that the revision or branch analyzed by SonarQube may not be the same as what you have opened in the IDE. In this case, SonarLint will do its best to locate the security hotspot in your local code.</p>
+    <p>More Information can be found on SonarQube docs https://docs.sonarqube.org/latest/user-guide/security-hotspots/.</p>
+</div>
+
+<div class="panel panel-default">
+    <div class="panel-heading"><h2 style="margin-bottom: 0; margin-top: 0;">Security Hotspots</h2></div>
+    <div class="panel-body">
+        {% for component in items %}
+            <div class="{% if loop.last %}break-after{% endif %}">
+                <h3>File: {{ component.path }}</h3>
+                {% for hotspot in component.items %}
+                    <p><b>Level: {{ hotspot.vulnerabilityProbability }} | Line: {{ hotspot.line }}</b></p>
+                    <p>{{ hotspot.message }}</p>
+                    <pre>{{hotspot.source | raw}}</pre>
+                    <h4>What's the risk?</h4>
+                    {{ hotspot.info.rule.riskDescription | replace({'h2':'h5'}) | raw }}
+                    <h4>Are you at risk?</h4>
+                    {{ hotspot.info.rule.vulnerabilityDescription | replace({'h2':'h5'}) | raw }}
+                    <h4>How can you fix it?</h4>
+                    {{ hotspot.info.rule.fixRecommendations | replace({'h2':'h5'}) | raw }}
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

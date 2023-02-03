@@ -12,9 +12,12 @@ class SonarQube
 
     protected array $metrics = ['code_smells', 'coverage', 'bugs', 'vulnerabilities', 'security_hotspots', 'duplicated_lines', 'lines', 'ncloc'];
 
-    protected array $summary = [];
+    protected array $issueTypes = ['CODE_SMELL', 'VULNERABILITY', 'BUG'];
 
-    protected array $issues = [];
+    protected array $facetTypes = ['severity'];
+
+    protected array $ruleItems = [];
+    protected array $metricItems = [];
 
     public function __construct(string $host, string $user, string $pass)
     {
@@ -39,176 +42,164 @@ class SonarQube
         }
     }
 
-    protected function getMeasuresComponents(string $project, array $metrics = [])
+    public function getMeasuresComponents(string $project, array $metrics = [])
     {
+        $metrics = empty($metrics) ? $this->metrics : $metrics;
         return $this->query('/api/measures/component', [
             'component' => $project,
             'metricKeys' => implode(',', $metrics)
         ]);
     }
 
-    protected function getIssuesSearch(string $project, array $facets = [], int $page = 1)
+    public function getMeasuresComponentsTree(string $project, array $metrics, int $page = 1)
+    {
+        return $this->query('/api/measures/component_tree', [
+           'component' => $project,
+           'metricKeys' => implode(',', $metrics),
+            'ps' => 500,
+            'p' => $page,
+        ]);
+    }
+
+    public function getMetrics(int $page = 1)
+    {
+        return $this->query('/api/metrics/search', [
+            'ps' => 500,
+            'p' => $page,
+        ]);
+    }
+
+    public function getIssuesSearch(string $project, int $page = 1, array $facetTypes = [], array $types = [])
     {
         return $this->query('/api/issues/search', [
             'componentKeys' => $project,
             'ps' => 500,
             'p' => $page,
-            'facets' => implode(',', $facets)
+            'facets' => implode(',', $facetTypes),
+            'types' => implode(',', $types),
         ]);
     }
 
-    protected function getProjectAnalyses(string $project)
+    public function getHotSpotsSearch(string $project, int $page = 1)
+    {
+        $query = [
+            'projectKey' => $project,
+            'ps' => 500,
+            'p' => $page,
+        ];
+        return $this->query('/api/hotspots/search', $query);
+    }
+
+    public function getSourceLines(string $key, string|int $from, string|int $to)
+    {
+        return $this->query('/api/sources/lines', [
+            'key' => $key,
+            'from' => $from,
+            'to' => $to,
+        ]);
+    }
+
+    public function getSourceSnippet(string $issueKey)
+    {
+        return $this->query('/api/sources/issue_snippets', [
+            'issueKey' => $issueKey,
+        ]);
+    }
+
+    public function getHotSpot(string $hotspot)
+    {
+        return $this->query('/api/hotspots/show', [
+            'hotspot' => $hotspot,
+        ]);
+    }
+
+    public function getProjectAnalyses(string $project)
     {
         return $this->query('/api/project_analyses/search', [
-            'project' => $project
+            'project' => $project,
         ]);
     }
 
-    // Helper Functions
-
-    protected function getSeverityLevel(string $severity)
+    public function getRule(string $rule)
     {
-        $severityLevel = [
-            'BLOCKER' => -5,
-            'CRITICAL' => -4,
-            'MAJOR' => -3,
-            'MINOR' => -2,
-            'INFO' => -1
-        ];
-
-        return $severityLevel[$severity] ?? 0;
+        return $this->query('/api/rules/show', [
+            'key' => $rule,
+        ]);
     }
 
-    protected function getProjectIssues(string $project)
+    public function searchRules(int $page = 1)
     {
-        $continue = true;
+        return $this->query('/api/rules/search', [
+            'ps' => 500,
+            'p' => $page
+        ]);
+    }
+
+    public function getAllRules()
+    {
+        if (!empty($this->ruleItems)) {
+            return $this->ruleItems;
+        }
+
+        $rules = [];
         $page = 1;
-
-        $issues = [];
-
-        while ($continue) {
-            $issueData = $this->getIssuesSearch($project, [], $page);
-            $components = $issueData['components'];
-
-            foreach ($issueData['issues'] AS $issue) {
-                $component = $issue['component'];
-                if (!isset($issues[$component])) {
-                    $issues[$component] = $this->findComponent($components, $component);
-                    $issues[$component]['items'] = [];
-                }
-
-                // if line isn't set use the textRange attribute
-                if (!isset($issue['line'])) {
-                    $issue['line'] = $issue['textRange']['startLine'] ?? '';
-                }
-                $issue['severity_level'] = $this->getSeverityLevel($issue['severity']);
-
-                $issues[$component]['items'][] = $issue;
+        $continue = true;
+        while($continue) {
+            $rulesData = $this->searchRules($page);
+            foreach ($rulesData['rules'] AS $rule) {
+                $rules[$rule['key']] = $rule;
             }
 
-            $total = $issueData['total'];
-            $perPage = $issueData['ps'];
+            $perPage = $rulesData['ps'];
+            $total = $rulesData['total'];
             if ($continue = (($page + 1) * $perPage < $total)) {
                 $page++;
             }
         }
 
-        // Loop through and sort by severity_level then line
-        foreach ($issues AS $component => &$items) {
-
-            try {
-                array_multisort(
-                    array_column($items['items'], 'severity_level'),
-                    SORT_ASC,
-                    SORT_REGULAR,
-                    array_column($items['items'], 'line'),
-                    SORT_ASC,
-                    SORT_REGULAR,
-                    $items['items']
-                );
-            } catch(\ValueError $exception) {
-                echo sprintf('ERROR: %s with %s', $exception->getMessage(), $component);
-                die;
-            }
-        }
-
-        return $issues;
+        $this->ruleItems = $rules;
+        return $rules;
     }
 
-    protected function getLastRun(string $project)
+    public function getAllMetrics()
     {
-        $response = $this->getProjectAnalyses($project);
-        return $response['analyses'][0]['date'];
+        if (!empty($this->metricItems)) {
+            return $this->metricItems;
+        }
+
+        $metrics = [];
+        $page = 1;
+        $continue = true;
+        while ($continue) {
+            $metricData = $this->getMetrics($page);
+            foreach ($metricData['metrics'] AS $metric) {
+                $metrics[$metric['key']] = $metric;
+            }
+
+            $perPage = $metricData['ps'];
+            $total = $metricData['total'];
+            if ($continue = (($page + 1) * $perPage < $total)) {
+                $page++;
+            }
+        }
+        $this->metricItems = $metrics;
+        return $metrics;
     }
 
-    protected function getSeveritySummary(string $project)
+    public function getDuplications(string $key)
     {
-        $response = $this->getIssuesSearch($project, ['severities']);
-        return $response['facets'][0];
+        return $this->query('/api/duplications/show', [
+            'key' => $key,
+        ]);
     }
 
-    protected function findMetric(array $data, string $metric) {
-        foreach ($data['component']['measures'] AS $measure) {
-            if ($measure['metric'] === $metric) {
-                return $measure['value'];
-            }
-        }
+    public function getDuplicationsTree(string $project, int $page = 1)
+    {
+        return $this->getMeasuresComponentsTree($project, [
+            'duplicated_lines',
+            'duplicated_blocks',
+            'duplicated_lines_density',
+            'duplicated_files',
+        ], $page);
     }
-
-    protected function findSeverity(array $data, string $metric) {
-        foreach ($data['values'] AS $value) {
-            if ($value['val'] === $metric) {
-                return $value['count'];
-            }
-        }
-    }
-
-    protected function findComponent(array $components, string $component) {
-        foreach ($components AS $item) {
-            if ($item['key'] === $component) {
-                return $item;
-            }
-        }
-    }
-
-    public function getProjectSummary(string $project) {
-        if (!isset($this->summary[$project])) {
-            $measures = $this->getMeasuresComponents($project, $this->metrics);
-            $severities = $this->getSeveritySummary($project);
-            $lastRun = $this->getLastRun($project);
-
-            $this->summary[$project] = [
-                'name' => $measures['component']['name'],
-                'lastrun' => $lastRun,
-                'info' => $this->findSeverity($severities, 'INFO'),
-                'minor' => $this->findSeverity($severities, 'MINOR'),
-                'major' => $this->findSeverity($severities, 'MAJOR'),
-                'critical' => $this->findSeverity($severities, 'CRITICAL'),
-                'blocker' => $this->findSeverity($severities, 'BLOCKER'),
-                'code_smell' => $this->findMetric($measures, 'code_smells'),
-                'bugs' => $this->findMetric($measures, 'bugs'),
-                'vulnerability' => $this->findMetric($measures, 'vulnerabilities'),
-                'hotspot' => $this->findMetric($measures, 'security_hotspots'),
-                'lines' => $this->findMetric($measures, 'ncloc'),
-            ];
-        }
-        return $this->summary[$project];
-    }
-
-    public function getProjectRun(string $project) {
-        if (!isset($this->issues[$project])) {
-            $summary = $this->getProjectSummary($project);
-            $issues = $this->getProjectIssues($project);
-            $this->issues[$project] = [
-                'info' => [
-                    'name' => $summary['name'],
-                    'lastrun' => $summary['lastrun'],
-                    'summary' => $summary,
-                ],
-                'issues' => $issues,
-            ];
-        }
-        return $this->issues[$project];
-    }
-
 }

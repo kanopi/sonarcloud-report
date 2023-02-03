@@ -59,30 +59,38 @@ class RunReport {
 
         $data = [];
         foreach ($projects AS $project) {
-            $data[$project] = [
-                'summary' => $this->sonarQube->getProjectSummary($project),
-                'issues' => $this->sonarQube->getProjectRun($project),
-            ];
+            $data[$project] = new Project($this->sonarQube, $project);
         }
 
-        $summary = array_column($data, 'summary');
         $summaryOutput = $this->getTwig()->render('summary.html.twig', [
-            'summary' => $summary
+            'summary' => array_map(function(Project $project) {
+                return $project->getSummary();
+            }, $data),
         ]);
         $this->getPdf()->addPage($summaryOutput);
 
-        $issues = array_column($data, 'issues');
-        foreach ($issues AS $key => $issue) {
-            $output = $this->getTwig()->render('report.html.twig', [
-                'title' => '',
-                'issues' => $issue,
-            ]);
-
+        foreach ($data as $project) {
             $options = [
-                'header-left' => $summary[$key]['name'],
+                'header-left' => $project->getName(),
             ];
 
-            $this->getPdf()->addPage($output, $options);
+            $reports = [
+                'issues.html.twig' => 'issues',
+                'vulnerabilities.html.twig' => 'vulnerabilities',
+                'hotspots.html.twig' => 'hotspots',
+                'duplications.html.twig' => 'duplications',
+            ];
+
+            $summary = $project->getSummary();
+            $items = $project->getItems();
+            foreach ($reports AS $index) {
+                $report = $this->getTwig()->render($index . '.html.twig', [
+                    'title' => '',
+                    'items' => $items[$index],
+                    'summary' => $summary,
+                ]);
+                $this->getPdf()->addPage($report, $options);
+            }
         }
 
         if (!$this->getPdf()->saveAs($fileName)) {

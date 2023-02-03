@@ -1,4 +1,4 @@
-IMAGE ?= kanopi/sonarqube-report
+IMAGE ?= devkteam/sonarqube-report
 BUILD_IMAGE_TAG ?= $(IMAGE):build
 NAME = sonarqube-report
 CWD = $(shell pwd)
