@@ -1,4 +1,4 @@
-#!/usr/bin/env php
+#!/usr/bin/env php -d memory_limit=-1
 <?php
 
 require_once __DIR__ . '/vendor/autoload.php';

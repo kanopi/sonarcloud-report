@@ -229,9 +229,7 @@ class Project
 
             $total = $issueData['paging']['total'];
             $perPage = $issueData['paging']['pageSize'];
-            if ($continue = (($page + 1) * $perPage < $total)) {
-                $page++;
-            }
+            $continue = $this->sonarQube->continueToNextPage($page, $perPage, $total);
         }
 
         foreach ($issues AS $component => &$items) {
@@ -283,9 +281,7 @@ class Project
 
             $total = $issueData['paging']['total'];
             $perPage = $issueData['paging']['pageSize'];
-            if ($continue = (($page + 1) * $perPage < $total)) {
-                $page++;
-            }
+            $continue = $this->sonarQube->continueToNextPage($page, $perPage, $total);
         }
 
         foreach ($issues AS $component => &$items) {
@@ -341,9 +337,7 @@ class Project
 
             $total = $hotspotsData['paging']['total'];
             $perPage = $hotspotsData['paging']['pageSize'];
-            if ($continue = (($page + 1) * $perPage < $total)) {
-                $page++;
-            }
+            $continue = $this->sonarQube->continueToNextPage($page, $perPage, $total);
         }
 
         foreach ($hotspots AS $component => &$items) {
@@ -383,20 +377,12 @@ class Project
                     array_column($metric['measures'], 'value')
                 );
 
-//                if ($metric['measures']['duplicated_lines'] == 0 &&
-//                    $metric['measures']['duplicated_files'] == 0 &&
-//                    $metric['measures']['duplicated_blocks'] == 0) {
-//                    continue;
-//                }
-
                 $duplications[$metric['key']] = $metric;
             }
 
             $total = $metricData['paging']['total'];
             $perPage = $metricData['paging']['pageSize'];
-            if ($continue = (($page + 1) * $perPage < $total)) {
-                $page++;
-            }
+            $continue = $this->sonarQube->continueToNextPage($page, $perPage, $total);
         }
 
         ksort($duplications);

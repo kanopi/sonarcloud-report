@@ -135,6 +135,15 @@ class SonarQube
         ]);
     }
 
+    public function continueToNextPage(&$page, $perPage, $total)
+    {
+        $page++;
+        return (
+            ($page * $perPage < $total) &&
+            ($page * $perPage <= 10000)
+        );
+    }
+
     public function getAllRules()
     {
         if (!empty($this->ruleItems)) {
@@ -152,9 +161,7 @@ class SonarQube
 
             $perPage = $rulesData['ps'];
             $total = $rulesData['total'];
-            if ($continue = (($page + 1) * $perPage < $total)) {
-                $page++;
-            }
+            $continue = $this->continueToNextPage($page, $perPage, $total);
         }
 
         $this->ruleItems = $rules;
@@ -178,9 +185,7 @@ class SonarQube
 
             $perPage = $metricData['ps'];
             $total = $metricData['total'];
-            if ($continue = (($page + 1) * $perPage < $total)) {
-                $page++;
-            }
+            $continue = $this->continueToNextPage($page, $perPage, $total);
         }
         $this->metricItems = $metrics;
         return $metrics;
