@@ -36,4 +36,4 @@ RUN set -xe; \
 
 VOLUME /mnt/reports
 
-CMD ["/root/run.php"]
+CMD ["php", "-d", "memory_limit=-1", "/root/run.php"]
