@@ -3,6 +3,10 @@
 namespace Kanopi\SonarQube;
 
 use mikehaertl\wkhtmlto\Pdf;
+use Monolog\Level;
+use Monolog\Logger;
+use Monolog\Handler\StreamHandler;
+use Psr\Log\LoggerInterface;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
@@ -15,6 +19,8 @@ use Twig\Loader\FilesystemLoader;
 class RunReport {
 
     protected SonarQube $sonarQube;
+
+    protected LoggerInterface $log;
 
     protected Environment $twig;
 
@@ -53,6 +59,7 @@ class RunReport {
 
     public function createReport(string|array $projects, string $fileName)
     {
+        $this->log->info('Starting to Create Report');
         if (is_string($projects)) {
             $projects = [$projects];
         }
@@ -62,14 +69,19 @@ class RunReport {
             $data[$project] = new Project($this->sonarQube, $project);
         }
 
+        $this->log->info('Creating Summary for Project', $projects);
         $summaryOutput = $this->getTwig()->render('summary.html.twig', [
             'summary' => array_map(function(Project $project) {
                 return $project->getSummary();
             }, $data),
         ]);
+
+        $this->log->info('Add Summary Page to end of the report');
         $this->getPdf()->addPage($summaryOutput);
 
+        $this->log->info('Looping through the projects');
         foreach ($data as $project) {
+            $this->log->info('Starting on the report - ' . $project->getName());
             $options = [
                 'header-left' => $project->getName(),
             ];
@@ -81,18 +93,22 @@ class RunReport {
                 'duplications.html.twig' => 'duplications',
             ];
 
+            $this->log->info('Starting on reports');
             $summary = $project->getSummary();
             $items = $project->getItems();
             foreach ($reports AS $index) {
+                $this->log->info('Building report ' . $index);
                 $report = $this->getTwig()->render($index . '.html.twig', [
                     'title' => '',
                     'items' => $items[$index],
                     'summary' => $summary,
                 ]);
+                $this->log->info('Adding page to end of the report');
                 $this->getPdf()->addPage($report, $options);
             }
         }
 
+        $this->log->info('Attempting to save the file');
         if (!$this->getPdf()->saveAs($fileName)) {
             echo sprintf('ERROR: %s', $this->getPdf()->getError());
             exit(1);
@@ -123,6 +139,9 @@ class RunReport {
     ) {
         $sonarQube = new SonarQube($sonarQubeHost, $sonarQubeUser, $sonarQubePass);
         $instance = new RunReport($sonarQube);
+        $log = new Logger('sonarqube-report');
+        $log->pushHandler(new StreamHandler('php://stdout', Logger::DEBUG));
+        $instance->log = $log;
         $instance->createReport($project, $fileName);
     }
 }

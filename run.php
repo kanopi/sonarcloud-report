@@ -20,6 +20,8 @@ if (empty($sonarQubeHost) || empty($sonarQubeUser) || empty($sonarQubeProjects))
     die;
 }
 
+echo "Starting";
+
 RunReport::run(
     $sonarQubeHost,
     $sonarQubeUser,

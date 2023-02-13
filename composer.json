@@ -19,6 +19,7 @@
         "guzzlehttp/guzzle": "^7.5",
         "twig/twig": "^3.0",
         "mikehaertl/phpwkhtmltopdf": "^2.5",
-        "vlucas/phpdotenv": "^5.5"
+        "vlucas/phpdotenv": "^5.5",
+        "monolog/monolog": "^3.3"
     }
 }
