@@ -1,0 +1,27 @@
+version: 2.1
+
+orbs:
+  docker: circleci/docker@2.2
+
+workflows:
+  build-docker-image-only:
+    jobs:
+      - docker/publish:
+          image: devkteam/sonarqube-report
+          tag: latest
+          update-description: true
+          docker-username: DOCKERHUB_USER
+          docker-password: DOCKERHUB_PASS
+          context: kanopi-code
+          filter:
+            branches:
+              only: main
+      - docker/publish:
+          image: devkteam/sonarqube-report
+          docker-username: DOCKERHUB_USER
+          docker-password: DOCKERHUB_PASS
+          update-description: true
+          context: kanopi-code
+          filter:
+            branches:
+              ignore: main
