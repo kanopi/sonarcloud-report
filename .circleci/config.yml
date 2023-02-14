@@ -13,7 +13,7 @@ workflows:
           docker-username: DOCKERHUB_USER
           docker-password: DOCKERHUB_PASS
           context: kanopi-code
-          filter:
+          filters:
             branches:
               only: main
       - docker/publish:
@@ -22,6 +22,6 @@ workflows:
           docker-password: DOCKERHUB_PASS
           update-description: true
           context: kanopi-code
-          filter:
+          filters:
             branches:
               ignore: main
