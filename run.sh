@@ -23,14 +23,16 @@ lightmagenta='\033[0;95;49m'
 lightmagenta_bg='\033[0;105;30m'
 NC='\033[0m'
 
-# Configurable
+# Configurable Variables
 PASS=${PASSWORD:-password}
-PROJECT_NAME=${PROJECT_NAME:-"Test Project"}
+USER=${USER:-admin}
 PORT=${PORT:-"9000"}
 HOST=${HOST:-"http://127.0.0.1:${PORT}"}
 MAX_TRIES=${MAX_TRIES:-3}
 SLEEPTIME=${SLEEPTIME:-90}
 PROJECT_DIRECTORY=${PROJECT_DIRECTORY:-$(pwd)}
+PROJECT_NAME=$(basename ${PROJECT_DIRECTORY})
+PROJECT_NAME=${PROJECT_NAME:-"Test Project"}
 IMAGE_TAG=${IMAGE_TAG:-"8.9-community"}
 SERVICE_NAME=${SERVICE_NAME:-sonarqube}
 
@@ -39,26 +41,25 @@ SONARQUBE_CLI_REMOTE_HOST=${SONARQUBE_CLI_REMOTE_HOST:-"http://sonarqube:${PORT}
 SONARQUBE_SERVICE_IMAGE="sonarqube:${IMAGE_TAG}"
 SONARQUBE_REPORT_IMAGE="devkteam/sonarqube-report:${SONARQUBE_REPORT_IMAGE_TAG:-latest}"
 SONARQUBE_CLI_IMAGE="sonarsource/sonar-scanner-cli:latest"
-
 CLEANUP=${CLEANUP}
 
 # Not Configurable
 PROJECT_KEY=$(echo "${PROJECT_NAME}" | sed "s/[ |-]/_/g" | sed 's/[^a-zA-Z_]//g' | tr '[:upper:]' '[:lower:]')
-USER=admin
 OLDPASS=admin
+LOG_FILE=${LOG_FILE:-"/tmp/${PROJECT_KEY}.sonarqube.log"}
 TRIES=0
-LOG_FILE="/tmp/${PROJECT_KEY}.sonarqube.log"
 
+# Find Version of Python
+PYTHON=${PYTHON:-$(which python 2&>/dev/null || true)}
+PYTHON=${PYTHON:-$(which python3 2&>/dev/null || true)}
 
 #### Helper Functions
-
 echo-red ()      { echo -e "${red}$1${NC}"; }
 echo-green ()    { echo -e "${green}$1${NC}"; }
 echo-green-bg () { echo -e "${green_bg}$1${NC}"; }
 echo-yellow ()   { echo -e "${yellow}$1${NC}"; }
 
-echo-warning ()
-{
+echo-warning() {
 	echo -e "${yellow_bg} WARNING: ${NC} ${yellow}$1${NC}";
 	shift
 	for arg in "$@"; do
@@ -66,8 +67,7 @@ echo-warning ()
 	done
 }
 
-echo-error ()
-{
+echo-error() {
 	echo -e "${red_bg} ERROR: ${NC} ${red}$1${NC}"
 	shift
 	for arg in "$@"; do
@@ -75,8 +75,7 @@ echo-error ()
 	done
 }
 
-echo-notice ()
-{
+echo-notice() {
 	echo -e "${lightmagenta_bg} NOTICE: ${NC} ${lightmagenta}$1${NC}"
 	shift
 	for arg in "$@"; do
@@ -85,20 +84,17 @@ echo-notice ()
 }
 
 # print string in $1 for $2 times
-echo-repeat ()
-{
+echo-repeat() {
     seq  -f $1 -s '' $2; echo
 }
 
 # prints message to stderr
-echo-stderr ()
-{
+echo-stderr() {
 	(>&2 echo "$@")
 }
 
 # Exits fin if previous command exited with non-zero code
-if_failed ()
-{
+if_failed() {
 	if [ ! $? -eq 0 ]; then
 		echo-red "$*"
 		exit 1
@@ -106,52 +102,71 @@ if_failed ()
 }
 
 # Like if_failed but with more strict error
-if_failed_error ()
-{
+if_failed_error() {
 	if [ ! $? -eq 0 ]; then
 		echo-error "$@"
 		exit 1
 	fi
 }
 
-cleanup () {
+# Parse Options
+while getopts "cd:h:l:m:p:r:s:u:-:" OPT; do
+  # support long options: https://stackoverflow.com/a/28466267/519360
+  if [ "$OPT" = "-" ]; then   # long option: reformulate OPT and OPTARG
+    OPT="${OPTARG%%=*}"       # extract long option name
+    OPTARG="${OPTARG#$OPT}"   # extract long option argument (may be empty)
+    OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
+  fi
+  case $OPT in
+    c|cleanup)            CLEANUP="1";;
+    d|directory)          PROJECT_DIRECTORY="${OPTARG}";;
+    h|host)               HOST="${OPTARG}";;
+    k|project-key)        PROJECT_KEY=$(echo "${OPTARG}" | sed "s/[ |-]/_/g" | sed 's/[^a-zA-Z_]//g' | tr '[:upper:]' '[:lower:]');;
+    l|log)                LOG_FILE="${OPTARG}";;
+    m|max-tries)          MAX_TRIES="${OPTARG}";;
+    p|password)           PASS="${OPTARG}";;
+    r|project)            PROJECT_NAME="${OPTARG}";;
+    s|cli-remote-host)    SONARQUBE_CLI_REMOTE_HOST="${OPTARG}";;
+    u|user)               USER="${OPTARG}";;
+    ??* )                 echo-error "Illegal option --$OPT"; exit 2 ;;  # bad long option
+    ? )                   exit 2 ;;  # bad short option (error reported via getopts)
+  esac
+done
+shift $((OPTIND-1)) # remove parsed options and args from $@ list
+
+cleanup() {
     echo-warning "Removing services..."
     docker rm -f ${SERVICE_NAME} > /dev/null
 }
 
-start_sonarqube()
-{
+start_sonarqube() {
     docker run -itd --rm \
         --name ${SERVICE_NAME} \
         -p ${PORT}:${PORT} \
         sonarqube:${IMAGE_TAG} > /dev/null
 }
 
-sonarqube_running ()
-{
-    echo $(docker ps -a | grep ${SERVICE_NAME} | wc -l | tr -d '[:blank:]')
+sonarqube_running() {
+    # shellcheck disable=SC2005
+    echo "$(docker ps -a | grep "${SERVICE_NAME}" | wc -l | tr -d '[:blank:]')"
 }
 
-check_sonarqube_status ()
-{
-    echo $(curl -fsSL -u ${USER}:${OLDPASS} \
-        ${HOST}/api/system/status | grep "UP" | wc -l | tr -d '[:blank:]')
+check_sonarqube_status() {
+    # shellcheck disable=SC2005
+    echo "$(curl -fsSL -u "${USER}:${OLDPASS}" "${HOST}/api/system/status" | grep "UP" | wc -l | tr -d '[:blank:]')"
 }
 
-get_sonarqube_status ()
-{
+get_sonarqube_status() {
     echo $([[ "${1}" == 0 ]] && echo "Not Started" || echo "Started")
 }
 
 #### Execution
 
-project_exists()
-{
-    echo $(curl -fsSL -u ${USER}:${PASS} ${HOST}/api/projects/search?projects=${1} | jq -r '.components | length' )
+project_exists() {
+    echo $(curl -fsSL -u "${USER}:${PASS}" "${HOST}/api/projects/search?projects=${1}" | ${PYTHON} -c 'import json,sys;obj=json.load(sys.stdin);print(obj["paging"]["total"])')
 }
 
-pull_latest_images()
-{
+pull_latest_images() {
     echo-notice "Pulling latest version of images..."
 
     docker pull --quiet ${SONARQUBE_SERVICE_IMAGE} > /dev/null
@@ -159,8 +174,7 @@ pull_latest_images()
     docker pull --quiet ${SONARQUBE_CLI_IMAGE} > /dev/null
 }
 
-check_status()
-{
+check_status() {
     echo-notice "Checking Sonarqube Status..."
 
     IS_STARTED=$(sonarqube_running)
@@ -177,8 +191,7 @@ check_status()
     fi
 }
 
-start_service ()
-{
+start_service() {
     echo-notice "Starting Sonarqube..."
 
     start_sonarqube
@@ -215,8 +228,7 @@ start_service ()
     echo-notice "Service started..."
 }
 
-change_password()
-{
+change_password() {
     echo-notice "Changing initial default password..."
 
     curl -fsSL -u ${USER}:${OLDPASS} \
@@ -226,8 +238,7 @@ change_password()
         -d "previousPassword=${OLDPASS}" >/dev/null
 }
 
-update_libraries()
-{
+update_libraries() {
     echo-notice "Adding extensions to PHP Library..."
 
     curl -fsSL -u ${USER}:${PASS} \
@@ -236,16 +247,14 @@ update_libraries()
         -d 'values=php&values=php3&values=php4&values=php5&values=phtml&values=inc&values=module' > /dev/null
 }
 
-delete_project()
-{
+delete_project() {
     echo-notice "Deleting Project: ${1}..."
     curl -fsSL -u ${USER}:${PASS} \
         ${HOST}/api/projects/delete \
         -d "project=${1}"
 }
 
-create_project()
-{
+create_project() {
     PROJECT_EXISTS=$(project_exists ${PROJECT_KEY})
     if [[ "${PROJECT_EXISTS}" != "0" ]]; then
         delete_project ${PROJECT_KEY}
@@ -259,8 +268,7 @@ create_project()
         -d "project=${PROJECT_KEY}" > /dev/null
 }
 
-run_scanner()
-{
+run_scanner() {
     echo-notice "Running Scanner..."
 
     docker run --rm -it -v ${PROJECT_DIRECTORY}:/usr/src \
@@ -274,8 +282,7 @@ run_scanner()
         -Dsonar.password="${PASS}" > ${LOG_FILE}
 }
 
-run_report()
-{
+run_report() {
     echo-notice "Generating Report..."
 
     docker run --rm -it -v ${PROJECT_DIRECTORY}:/mnt/reports \
@@ -287,33 +294,82 @@ run_report()
         ${SONARQUBE_REPORT_IMAGE}
 }
 
-check_requirements()
-{
+check_requirements() {
   $(which docker > /dev/null) || if_failed_error "Docker Binary not found"
-  $(which jq > /dev/null) || if_failed_error "jQ Binary not found"
+}
+
+usage() {
+  echo "\
+
+Run SonarQube reporting for the code.
+
+Usage:
+  $0 <options> <command>
+
+Options:
+  -c, --cleanup            Cleanup all the items after done running report.
+
+  -d, --directory          Directory to run the report in.
+                           (Default: ${PROJECT_DIRECTORY})
+
+  -h, --host               Hostname to access SonarQube data.
+                           (Default: ${HOST})
+
+  -k, --project-key        Project Key
+                           (Default: ${PROJECT_KEY})
+
+  -m, --max-tries          Max number of tries to check for remote host.
+                           (Default: ${MAX_TRIES})
+
+  -p, --password           Set the password for connecting to the instance of SonarQube/SonarCloud
+                           (Default: ${PASS})
+
+  -r, --project            Set the project name
+                           (Default: ${PROJECT_NAME})
+
+  -s, --cli-remote-host    Set the remote host to connect to for the cli
+                           (Default: ${SONARQUBE_CLI_REMOTE_HOST})
+
+  -t, --port               Port to access SonarQube endpoint.
+                           (Default: ${PORT})
+
+Commands:
+  cleanup              Cleanup and remove all standing Docker containers.
+
+  run-report           Generate a report based on the latest scan from SonarQube.
+
+  run-scanner          Run the SonarQube CLI Scanner on the current code base. This is
+                       run in an isolated Docker container.
+
+  new-project          Create a new project, run the scanner, and generate the report necessary
+                       for the provided instance.
+
+  run                  Start the process from the beginning
+                       - Check if SonarQube Instance is running
+                       - Pull the latest version of Docker Images
+                       - Start SonarQube Service.
+                       - Change the password for first setup
+                       - Update the libraries for the instance
+                       - Create project on the SonarQube instance
+                       - Run the CLI scanner
+                       - Generate report
+
+"
 }
 
 check_requirements
 
+# Execute subcommands
 case "$1" in
     # Individual Commands
-    pull-latest)
-        pull_latest_images
-        ;;
     run-scanner)
         run_scanner
         ;;
     run-report)
         run_report
         ;;
-    create-project)
-        create_project
-        ;;
     cleanup)
         cleanup
-        ;;
-    change-password)
-        change_password
         ;;
     # Compound Commands
     new-project)
@@ -333,7 +389,7 @@ case "$1" in
 
         echo-green-bg "Completed"
         ;;
-    *)
+    run)
         check_status
         pull_latest_images
         start_service
@@ -348,5 +404,13 @@ case "$1" in
         fi
 
         echo-green-bg "Completed"
+        ;;
+    help)
+        usage
+        ;;
+    *)
+        usage
+        echo-error "Command: ${1} not supported"
+        exit 1
         ;;
 esac
