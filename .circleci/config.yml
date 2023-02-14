@@ -18,6 +18,7 @@ workflows:
               only: main
       - docker/publish:
           image: devkteam/sonarqube-report
+          tag: 'build-${CIRCLE_SHA1:0,7}'
           docker-username: DOCKERHUB_USER
           docker-password: DOCKERHUB_PASS
           update-description: true
