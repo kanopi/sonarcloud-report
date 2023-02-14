@@ -1,0 +1,56 @@
+version: 2.1
+
+orbs:
+  docker: circleci/docker@2.2
+
+workflows:
+  build-docker-image-only:
+    jobs:
+      - docker/publish:
+          name: "Create edge version"
+          image: devkteam/sonarqube-report
+          tag: edge
+          docker-username: DOCKERHUB_USER
+          docker-password: DOCKERHUB_PASS
+          context: kanopi-code
+          filters:
+            branches:
+              only: main
+            tags:
+              ignore: /.*/
+      - docker/publish:
+          name: "Create latest build image"
+          image: devkteam/sonarqube-report
+          tag: 'build-${CIRCLE_SHA1:0:7}'
+          docker-username: DOCKERHUB_USER
+          docker-password: DOCKERHUB_PASS
+          context: kanopi-code
+          filters:
+            branches:
+              ignore: main
+            tags:
+              ignore: /.*/
+      - docker/publish:
+          name: "Create new Version Tag"
+          image: devkteam/sonarqube-report
+          tag: '${CIRCLE_TAG}'
+          docker-username: DOCKERHUB_USER
+          docker-password: DOCKERHUB_PASS
+          context: kanopi-code
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /.*/
+      - docker/publish:
+          name: "Create Latest Tag"
+          image: devkteam/sonarqube-report
+          tag: 'latest'
+          docker-username: DOCKERHUB_USER
+          docker-password: DOCKERHUB_PASS
+          context: kanopi-code
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /.*/
