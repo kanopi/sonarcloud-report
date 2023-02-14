@@ -21,7 +21,7 @@ workflows:
           tag: 'build-${CIRCLE_SHA1:0:7}'
           docker-username: DOCKERHUB_USER
           docker-password: DOCKERHUB_PASS
-          update-description: true
+          update-description: false
           context: kanopi-code
           filters:
             branches:
