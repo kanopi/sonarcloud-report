@@ -2,33 +2,88 @@
 
 namespace Kanopi\SonarQube;
 
+/**
+ * Utility Class used for altering functions.
+ */
 class Util
 {
-    public static function findMetric(array $data, string $metric) {
+
+    /**
+     * Search data for a specific metric element.
+     *
+     * @param array $data
+     *   Data to search through.
+     * @param string $metric
+     *   Metric to query and return data for.
+     *
+     * @return string|null
+     *   Return the data.
+     */
+    public static function findMetric(array $data, string $metric): ?string
+    {
         foreach ($data['component']['measures'] AS $measure) {
             if ($measure['metric'] === $metric) {
                 return $measure['value'];
             }
         }
+
+        return null;
     }
 
-    public static function findSeverity(array $data, string $metric) {
+    /**
+     * Return the value for the specific
+     *
+     * @param array $data
+     *   Data to search through.
+     * @param string $metric
+     *   Metric to query and return data for.
+     *
+     * @return string|null
+     *   Return the data.
+     */
+    public static function findSeverity(array $data, string $metric): ?string
+    {
         foreach ($data['values'] AS $value) {
             if ($value['val'] === $metric) {
                 return $value['count'];
             }
         }
+
+        return null;
     }
 
-    public static function findComponent(array $components, string $component) {
+    /**
+     * Return the Component for the
+     *
+     * @param array $components
+     *   Data to search through.
+     * @param string $component
+     *   Component to search for.
+     *
+     * @return string|null
+     *   Return the data.
+     */
+    public static function findComponent(array $components, string $component): ?string
+    {
         foreach ($components AS $item) {
             if ($item['key'] === $component) {
                 return $item;
             }
         }
+
+        return null;
     }
 
-    public static function getSeverityLevel(string $severity)
+    /**
+     * Return the severity level.
+     *
+     * @param string $severity
+     *   Severity to search for.
+     *
+     * @return int
+     *   Return level number.
+     */
+    public static function getSeverityLevel(string $severity): int
     {
         $severityLevel = [
             'BLOCKER' => -5,
@@ -41,7 +96,16 @@ class Util
         return $severityLevel[$severity] ?? 0;
     }
 
-    public static function getVulnerabilityLevel(string $vulnerability)
+    /**
+     * Return the vulnerability level.
+     *
+     * @param string $vulnerability
+     *   Vulnerability to search for.
+     *
+     * @return int
+     *   Return level number.
+     */
+    public static function getVulnerabilityLevel(string $vulnerability): int
     {
         $level = [
             'HIGH' => -1,

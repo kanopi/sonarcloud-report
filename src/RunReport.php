@@ -8,6 +8,9 @@ use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use Psr\Log\LoggerInterface;
 use Twig\Environment;
+use Twig\Error\LoaderError;
+use Twig\Error\RuntimeError;
+use Twig\Error\SyntaxError;
 use Twig\Loader\FilesystemLoader;
 
 /**
@@ -24,12 +27,23 @@ class RunReport {
 
     protected Environment $twig;
 
+    /**
+     * Constructor.
+     *
+     * @param SonarQube $sonarQube
+     *   SonarQube Client.
+     */
     public function __construct(SonarQube $sonarQube)
     {
         $this->sonarQube = $sonarQube;
     }
 
-    protected function getTwig()
+    /**
+     * Return the Twig Instance.
+     *
+     * @return Environment
+     */
+    protected function getTwig(): Environment
     {
         if (!isset($this->twig)) {
             $loader = new FilesystemLoader(__DIR__ . '/../templates');
@@ -38,7 +52,13 @@ class RunReport {
         return $this->twig;
     }
 
-    protected function getPdf()
+    /**
+     * Return the PDF instance.
+     *
+     * @return Pdf
+     *   Return Pdf instance.
+     */
+    protected function getPdf(): Pdf
     {
         if (!isset($this->pdf)) {
             $options = [
@@ -57,7 +77,21 @@ class RunReport {
         return $this->pdf;
     }
 
-    public function createReport(string|array $projects, string $fileName)
+    /**
+     * Create the report for the given list of projects.
+     *
+     * @param string|string[] $projects
+     *   List of projects to query.
+     * @param string $fileName
+     *   Filename to save as.
+     *
+     * @return void
+     *
+     * @throws LoaderError
+     * @throws RuntimeError
+     * @throws SyntaxError
+     */
+    public function createReport(string|array $projects, string $fileName): void
     {
         $this->log->info('Starting to Create Report');
         if (is_string($projects)) {
@@ -65,6 +99,8 @@ class RunReport {
         }
 
         $data = [];
+
+        // Loop through all the requested projects and create new classes.
         foreach ($projects AS $project) {
             $data[$project] = new Project($this->sonarQube, $project);
         }
@@ -128,7 +164,12 @@ class RunReport {
      *   The list of projects to run a report on.
      * @param string $fileName
      *   The name to save the report as.
+     *
      * @return void
+     *
+     * @throws LoaderError
+     * @throws RuntimeError
+     * @throws SyntaxError
      */
     public static function run(
         string $sonarQubeHost,
@@ -136,7 +177,7 @@ class RunReport {
         string $sonarQubePass,
         string|array $project,
         string $fileName
-    ) {
+    ): void {
         $sonarQube = new SonarQube($sonarQubeHost, $sonarQubeUser, $sonarQubePass);
         $instance = new RunReport($sonarQube);
         $log = new Logger('sonarqube-report');

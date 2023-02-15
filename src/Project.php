@@ -3,11 +3,15 @@
 namespace Kanopi\SonarQube;
 
 /**
+ * Class Project.
  *
+ * Project class related to a specific SonarQube project and used
+ * for generating the report.
  */
 class Project
 {
     protected SonarQube $sonarQube;
+
     protected string $project;
 
     protected array $summary;
@@ -15,8 +19,12 @@ class Project
     protected array $items;
 
     /**
+     * Constructor
+     *
      * @param SonarQube $sonarQube
+     *   SonarQube API Client.
      * @param string $projectKey
+     *   Project key to query.
      */
     public function __construct(SonarQube $sonarQube, string $projectKey)
     {
@@ -24,41 +32,59 @@ class Project
         $this->sonarQube = $sonarQube;
     }
 
-    public function getName()
+    /**
+     * Return projects label.
+     *
+     * @return string
+     *   Project label.
+     */
+    public function getName(): string
     {
         $measures = $this->getMeasuresComponents();
         return $measures['component']['name'];
     }
 
-    public function getSummary()
+    /**
+     * Return summary for project.
+     *
+     * @return array<string, string>
+     *   Summary details.
+     */
+    public function getSummary(): array
     {
         if (empty($this->summary)) {
             $this->summary = [
                 'name' => $this->getName(),
                 'lastrun' => $this->getLastRun(),
-                'info' => $this->getTotalInfo(),
-                'minor' => $this->getTotalMinor(),
-                'major' => $this->getTotalMajor(),
-                'critical' => $this->getTotalCritical(),
-                'blocker' => $this->getTotalBlocked(),
-                'code_smell' => $this->getTotalCodeSmells(),
-                'bugs' => $this->getTotalBugs(),
-                'vulnerability' => $this->getTotalVulnerabilities(),
-                'hotspot' => $this->getTotalHotSpots(),
-                'lines' => $this->getTotalLines(),
+                'info' => $this->getTotalSeverity('INFO'),
+                'minor' => $this->getTotalSeverity('MINOR'),
+                'major' => $this->getTotalSeverity('MAJOR'),
+                'critical' => $this->getTotalSeverity('CRITICAL'),
+                'blocker' => $this->getTotalSeverity('BLOCKER'),
+                'code_smell' => $this->getTotalMeasures('code_smells'),
+                'bugs' => $this->getTotalMeasures('bugs'),
+                'vulnerability' => $this->getTotalMeasures('vulnerabilities'),
+                'hotspot' => $this->getTotalMeasures('security_hotspots'),
+                'lines' => $this->getTotalMeasures('ncloc'),
             ];
         }
 
         return $this->summary;
     }
 
-    public function getItems()
+    /**
+     * Return a list of all items for project. Including issues, hotspots, vulnerabilities, and duplications.
+     *
+     * @return array
+     *   Return all data.
+     */
+    public function getItems(): array
     {
         if (empty($this->items)) {
             $this->items = [
-                'issues' => $this->getIssues(),
-                'hotspots' => $this->getHotSpots(),
-                'vulnerabilities' => $this->getVulnerabilities(),
+                'issues' => $this->getProjectIssues(),
+                'hotspots' => $this->getProjectHotSpots(),
+                'vulnerabilities' => $this->getProjectVulnerabilities(),
                 'duplications' => $this->getDuplications(),
             ];
         }
@@ -66,101 +92,78 @@ class Project
         return $this->items;
     }
 
-    protected function getTotalMeasures($type)
+    /**
+     * Helper functions used for getting total number of measures.
+     *
+     * @param string $type
+     *   Type of items to query.
+     *
+     * @return string
+     *   Total number of items.
+     */
+    protected function getTotalMeasures(string $type): string
     {
         $measures = $this->getMeasuresComponents();
         return Util::findMetric($measures, $type);
     }
 
-    public function getTotalCodeSmells()
-    {
-        return $this->getTotalMeasures('code_smells');
-    }
-
-    public function getTotalBugs()
-    {
-        return $this->getTotalMeasures('bugs');
-    }
-
-    public function getTotalVulnerabilities()
-    {
-        return $this->getTotalMeasures('vulnerabilities');
-    }
-
-    public function getTotalHotSpots()
-    {
-        return $this->getTotalMeasures('security_hotspots');
-    }
-
-    public function getTotalLines()
-    {
-        return $this->getTotalMeasures('ncloc');
-    }
-
-    protected function getTotalSeverity($type)
+    /**
+     * Helper functions used for getting total number of severity items.
+     *
+     * @param string $type
+     *   Type of items to query.
+     *
+     * @return string
+     *   Total number of items.
+     */
+    protected function getTotalSeverity(string $type): string
     {
         $severities = $this->getSeveritySummary();
         return Util::findSeverity($severities, $type);
     }
 
-    public function getTotalInfo()
-    {
-        return $this->getTotalSeverity('INFO');
-    }
-
-    public function getTotalMinor()
-    {
-        return $this->getTotalSeverity('MINOR');
-    }
-
-    public function getTotalMajor()
-    {
-        return $this->getTotalSeverity('MAJOR');
-    }
-
-    public function getTotalCritical()
-    {
-        return $this->getTotalSeverity('CRITICAL');
-    }
-
-    public function getTotalBlocked()
-    {
-        return $this->getTotalSeverity('BLOCKER');
-    }
-
-    protected function getLastRun()
+    /**
+     * Return date of last run.
+     *
+     * @return string
+     *   Date of last run.
+     */
+    protected function getLastRun(): string
     {
         $response = $this->sonarQube->getProjectAnalyses($this->project);
         return $response['analyses'][0]['date'];
     }
 
-    protected function getMeasuresComponents()
+    /**
+     * Get all project measure components.
+     *
+     * @return mixed
+     *   Return all data.
+     */
+    protected function getMeasuresComponents(): mixed
     {
         return $this->sonarQube->getMeasuresComponents($this->project);
     }
 
-    protected function getSeveritySummary()
+    /**
+     * Get a list of all severities.
+     *
+     * @return array
+     *   Return all data.
+     */
+    protected function getSeveritySummary(): array
     {
         $response = $this->sonarQube->getIssuesSearch($this->project, 1, ['severities']);
         return $response['facets'][0];
     }
 
-    public function getIssues()
-    {
-        return $this->getProjectIssues();
-    }
-
-    public function getVulnerabilities()
-    {
-        return $this->getProjectVulnerabilities();
-    }
-
-    public function getHotSpots()
-    {
-        return $this->getProjectHotSpots();
-    }
-
-    public function getDuplications()
+    /**
+     * Return all duplications.
+     *
+     * @return array
+     *   Return all data.
+     */
+    public function getDuplications(): array
     {
         $duplications = $this->getProjectDuplications();
 
@@ -170,10 +173,13 @@ class Project
             'blocks' => 'duplicated_blocks',
         ];
 
+        // Loop through the different types of duplications.
         foreach ($info AS $key => $filter) {
+            // Filter out items that have duplications.
             $info[$key] = array_filter($duplications, function($item) use ($filter) {
                 return $item['measures'][$filter] > 0;
             });
+            // For anything but files sort in descending order.
             if ($key !== 'files') {
                 uasort($info[$key], function ($a, $b) use ($filter) {
                     if ($a['measures'][$filter] === $b['measures'][$filter]) return 0;
@@ -192,7 +198,13 @@ class Project
         ];
     }
 
-    protected function getProjectVulnerabilities()
+    /**
+     * Return a list of all vulnerabilities.
+     *
+     * @return array
+     *   Return all data.
+     */
+    protected function getProjectVulnerabilities(): array
     {
         $issues = [];
 
@@ -232,10 +244,26 @@ class Project
             $continue = $this->sonarQube->continueToNextPage($page, $perPage, $total);
         }
 
+        return $this->sortElements($issues, 'severity_level');
+    }
+
+    /**
+     * Sort all elements based on a specific sorting key.
+     *
+     * @param array $issues
+     *   Items to sort.
+     * @param string $sortKey
+     *   Sort key to sort on.
+     *
+     * @return array
+     *   Return the sorted data.
+     */
+    protected function sortElements(array $issues, string $sortKey): array
+    {
         foreach ($issues AS $component => &$items) {
             try {
                 array_multisort(
-                    array_column($items['items'], 'severity_level'),
+                    array_column($items['items'], $sortKey),
                     SORT_ASC,
                     SORT_REGULAR,
                     array_column($items['items'], 'line'),
@@ -253,14 +281,25 @@ class Project
         return $issues;
     }
 
-    protected function getProjectIssues()
+    /**
+     * Query elements of a specific type and apply a callback to transform them.
+     *
+     * @param string $searchFunction
+     *   Search function to use for querying elements. Comes from SonarQube client.
+     * @param callable $callback
+     *   Function used for applying adjustments.
+     *
+     * @return array
+     *   Return the modified data.
+     */
+    protected function queryElements(string $searchFunction, callable $callback): array
     {
         $issues = [];
 
         $continue = true;
         $page = 1;
         while ($continue) {
-            $issueData = $this->sonarQube->getIssuesSearch($this->project, $page);
+            $issueData = $this->sonarQube->$searchFunction($this->project, $page);
             $components = $issueData['components'];
 
             foreach ($issueData['issues'] AS $issue) {
@@ -270,11 +309,7 @@ class Project
                     $issues[$component]['items'] = [];
                 }
 
-                // if line isn't set use the textRange attribute
-                if (!isset($issue['line'])) {
-                    $issue['line'] = $issue['textRange']['startLine'] ?? '';
-                }
-                $issue['severity_level'] = Util::getSeverityLevel($issue['severity']);
+                $issue = $callback($issue);
 
                 $issues[$component]['items'][] = $issue;
             }
@@ -284,84 +319,61 @@ class Project
             $continue = $this->sonarQube->continueToNextPage($page, $perPage, $total);
         }
 
-        foreach ($issues AS $component => &$items) {
-            try {
-                array_multisort(
-                    array_column($items['items'], 'severity_level'),
-                    SORT_ASC,
-                    SORT_REGULAR,
-                    array_column($items['items'], 'line'),
-                    SORT_ASC,
-                    SORT_REGULAR,
-                    $items['items']
-                );
-            } catch(\ValueError $exception) {
-                echo sprintf('ERROR: %s with %s', $exception->getMessage(), $component);
-                die;
-            }
-        }
-        ksort($issues);
-
         return $issues;
     }
 
-    protected function getProjectHotSpots()
+    /**
+     * Return all project issues.
+     *
+     * @return array
+     *   Return all data.
+     */
+    protected function getProjectIssues(): array
     {
-        $hotspots = [];
-
-        $continue = true;
-        $page = 1;
-        while ($continue) {
-            $hotspotsData = $this->sonarQube->getHotSpotsSearch($this->project, $page);
-            $components = $hotspotsData['components'];
-
-            foreach ($hotspotsData['hotspots'] AS $hotspot) {
-                $component = $hotspot['component'];
-                if (!isset($hotspots[$component])) {
-                    $hotspots[$component] = Util::findComponent($components, $component);
-                    $hotspots[$component]['items'] = [];
-                }
-
-                $hotspot['vulnerability_level'] = Util::getVulnerabilityLevel($hotspot['vulnerabilityProbability']);
-
-                $source = $this->sonarQube->getSourceSnippet($hotspot['key']);
-                $hotspot['source'] = array_reduce($source[$hotspot['component']]['sources'] ?? [], function($source, $item) {
-                    $source .= ( strip_tags($item['code']) . PHP_EOL);
-                    return $source;
-                });
-
-                $hotspot['info'] = $this->sonarQube->getHotSpot($hotspot['key']);
-
-                $hotspots[$component]['items'][] = $hotspot;
+        $issues = $this->queryElements('getIssuesSearch', function($issue) {
+            // if line isn't set use the textRange attribute
+            if (!isset($issue['line'])) {
+                $issue['line'] = $issue['textRange']['startLine'] ?? '';
             }
+            $issue['severity_level'] = Util::getSeverityLevel($issue['severity']);
 
-            $total = $hotspotsData['paging']['total'];
-            $perPage = $hotspotsData['paging']['pageSize'];
-            $continue = $this->sonarQube->continueToNextPage($page, $perPage, $total);
-        }
+            return $issue;
+        });
 
-        foreach ($hotspots AS $component => &$items) {
-            try {
-                array_multisort(
-                    array_column($items['items'], 'vulnerability_level'),
-                    SORT_ASC,
-                    SORT_REGULAR,
-                    array_column($items['items'], 'line'),
-                    SORT_ASC,
-                    SORT_REGULAR,
-                    $items['items']
-                );
-            } catch(\ValueError $exception) {
-                echo sprintf('ERROR: %s with %s', $exception->getMessage(), $component);
-                die;
-            }
-        }
-
-        ksort($hotspots);
-        return $hotspots;
+        return $this->sortElements($issues, 'severity_level');
     }
 
-    protected function getProjectDuplications()
+    /**
+     * Return project hotspots.
+     *
+     * @return array
+     *   Return all data.
+     */
+    protected function getProjectHotSpots(): array
+    {
+        $hotspots = $this->queryElements('getHotSpotsSearch', function($hotspot) {
+            $hotspot['vulnerability_level'] = Util::getVulnerabilityLevel($hotspot['vulnerabilityProbability']);
+
+            $source = $this->sonarQube->getSourceSnippet($hotspot['key']);
+            $hotspot['source'] = array_reduce($source[$hotspot['component']]['sources'] ?? [], function($source, $item) {
+                $source .= ( strip_tags($item['code']) . PHP_EOL);
+                return $source;
+            });
+
+            $hotspot['info'] = $this->sonarQube->getHotSpot($hotspot['key']);
+            return $hotspot;
+        });
+
+        return $this->sortElements($hotspots, 'vulnerability_level');
+    }
+
+    /**
+     * Return all project duplications.
+     *
+     * @return array
+     *   Return all data.
+     */
+    protected function getProjectDuplications(): array
     {
         $duplications = [];
 
@@ -370,7 +382,9 @@ class Project
         while ($continue) {
             $metricData = $this->sonarQube->getDuplicationsTree($this->project, $page);
 
+            // Loop through all elements.
             foreach ($metricData['components'] AS $metric) {
+                // if the element isn't a file skip.
                 if ($metric['qualifier'] !== 'FIL') continue;
                 $metric['measures'] = array_combine(
                     array_column($metric['measures'], 'metric'),
@@ -389,12 +403,17 @@ class Project
         return $duplications;
     }
 
-    protected function getProjectDuplicationsSummary()
+    /**
+     * Return a summary of project duplications.
+     *
+     * @return array
+     *   Return all data.
+     */
+    protected function getProjectDuplicationsSummary(): array
     {
         $metricData = $this->sonarQube->getDuplicationsTree($this->project);
         $data = [];
-        foreach ($metricData['baseComponent']['measures'] AS $value)
-        {
+        foreach ($metricData['baseComponent']['measures'] AS $value) {
             $data[$value['metric']] = $value['value'];
         }
         return $data;
