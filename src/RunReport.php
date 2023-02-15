@@ -3,6 +3,7 @@
 namespace Kanopi\SonarQube;
 
 use mikehaertl\wkhtmlto\Pdf;
+use Monolog\Formatter\LineFormatter;
 use Monolog\Level;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
@@ -180,8 +181,16 @@ class RunReport {
     ): void {
         $sonarQube = new SonarQube($sonarQubeHost, $sonarQubeUser, $sonarQubePass);
         $instance = new RunReport($sonarQube);
+
         $log = new Logger('sonarqube-report');
-        $log->pushHandler(new StreamHandler('php://stdout', Logger::DEBUG));
+        $stream = new StreamHandler('php://stdout', Logger::DEBUG);
+        $dateFormat = "Y-m-d H:i:s";
+        $output = "[%datetime%] %level_name% > %message% %context% %extra%\n";
+        $formatter = new LineFormatter($output, $dateFormat);
+        $stream->setFormatter($formatter);
+
+        $log->pushHandler($stream);
+
         $instance->log = $log;
         $instance->createReport($project, $fileName);
     }
