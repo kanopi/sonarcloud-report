@@ -286,13 +286,15 @@ class Project
      *
      * @param string $searchFunction
      *   Search function to use for querying elements. Comes from SonarQube client.
+     * @param string $dataKey
+     *   The key of the elements to loop through.
      * @param callable $callback
      *   Function used for applying adjustments.
      *
      * @return array
      *   Return the modified data.
      */
-    protected function queryElements(string $searchFunction, callable $callback): array
+    protected function queryElements(string $searchFunction, string $dataKey, callable $callback): array
     {
         $issues = [];
 
@@ -302,7 +304,7 @@ class Project
             $issueData = $this->sonarQube->$searchFunction($this->project, $page);
             $components = $issueData['components'];
 
-            foreach ($issueData['issues'] AS $issue) {
+            foreach ($issueData[$dataKey] AS $issue) {
                 $component = $issue['component'];
                 if (!isset($issues[$component])) {
                     $issues[$component] = Util::findComponent($components, $component);
@@ -330,7 +332,7 @@ class Project
      */
     protected function getProjectIssues(): array
     {
-        $issues = $this->queryElements('getIssuesSearch', function($issue) {
+        $issues = $this->queryElements('getIssuesSearch', 'issues', function($issue) {
             // if line isn't set use the textRange attribute
             if (!isset($issue['line'])) {
                 $issue['line'] = $issue['textRange']['startLine'] ?? '';
@@ -351,7 +353,7 @@ class Project
      */
     protected function getProjectHotSpots(): array
     {
-        $hotspots = $this->queryElements('getHotSpotsSearch', function($hotspot) {
+        $hotspots = $this->queryElements('getHotSpotsSearch', 'hotspots', function($hotspot) {
             $hotspot['vulnerability_level'] = Util::getVulnerabilityLevel($hotspot['vulnerabilityProbability']);
 
             $source = $this->sonarQube->getSourceSnippet($hotspot['key']);
