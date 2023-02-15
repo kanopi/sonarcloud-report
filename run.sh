@@ -24,8 +24,8 @@ lightmagenta_bg='\033[0;105;30m'
 NC='\033[0m'
 
 # Configurable Variables
-PASS=${PASSWORD:-password}
-USER=${USER:-admin}
+PASSWORD=${PASSWORD:-password}
+USERNAME=${USERNAME:-admin}
 PORT=${PORT:-"9000"}
 HOST=${HOST:-"http://127.0.0.1:${PORT}"}
 MAX_TRIES=${MAX_TRIES:-3}
@@ -50,8 +50,11 @@ LOG_FILE=${LOG_FILE:-"/tmp/${PROJECT_KEY}.sonarqube.log"}
 TRIES=0
 
 # Find Version of Python
-PYTHON=${PYTHON:-$(which python 2&>/dev/null || true)}
-PYTHON=${PYTHON:-$(which python3 2&>/dev/null || true)}
+if [[ $(which python) ]]; then
+  PYTHON=$(which python)
+elif [[ $(which python3) ]]; then
+  PYTHON=$(which python3)
+fi
 
 #### Helper Functions
 echo-red ()      { echo -e "${red}$1${NC}"; }
@@ -124,10 +127,10 @@ while getopts "cd:h:l:m:p:r:s:u:-:" OPT; do
     k|project-key)        PROJECT_KEY=$(echo "${OPTARG}" | sed "s/[ |-]/_/g" | sed 's/[^a-zA-Z_]//g' | tr '[:upper:]' '[:lower:]');;
     l|log)                LOG_FILE="${OPTARG}";;
     m|max-tries)          MAX_TRIES="${OPTARG}";;
-    p|password)           PASS="${OPTARG}";;
+    p|password)           PASSWORD="${OPTARG}";;
     r|project)            PROJECT_NAME="${OPTARG}";;
     s|cli-remote-host)    SONARQUBE_CLI_REMOTE_HOST="${OPTARG}";;
-    u|user)               USER="${OPTARG}";;
+    u|user)               USERNAME="${OPTARG}";;
     ??* )                 echo-error "Illegal option --$OPT"; exit 2 ;;  # bad long option
     ? )                   exit 2 ;;  # bad short option (error reported via getopts)
   esac
@@ -153,7 +156,7 @@ sonarqube_running() {
 
 check_sonarqube_status() {
     # shellcheck disable=SC2005
-    echo "$(curl -fsSL -u "${USER}:${OLDPASS}" "${HOST}/api/system/status" | grep "UP" | wc -l | tr -d '[:blank:]')"
+    echo "$(curl -fsSL -u "${USERNAME}:${OLDPASS}" "${HOST}/api/system/status" | grep "UP" | wc -l | tr -d '[:blank:]')"
 }
 
 get_sonarqube_status() {
@@ -163,15 +166,15 @@ get_sonarqube_status() {
 #### Execution
 
 project_exists() {
-    echo $(curl -fsSL -u "${USER}:${PASS}" "${HOST}/api/projects/search?projects=${1}" | ${PYTHON} -c 'import json,sys;obj=json.load(sys.stdin);print(obj["paging"]["total"])')
+    echo $(curl -fsSL -u "${USERNAME}:${PASSWORD}" "${HOST}/api/projects/search?projects=${1}" | ${PYTHON} -c 'import json,sys;obj=json.load(sys.stdin);print(obj["paging"]["total"])')
 }
 
 pull_latest_images() {
     echo-notice "Pulling latest version of images..."
 
-    docker pull --quiet ${SONARQUBE_SERVICE_IMAGE} > /dev/null
-    docker pull --quiet ${SONARQUBE_REPORT_IMAGE} > /dev/null
-    docker pull --quiet ${SONARQUBE_CLI_IMAGE} > /dev/null
+    docker pull --quiet ${SONARQUBE_SERVICE_IMAGE} > /dev/null || true
+    docker pull --quiet ${SONARQUBE_REPORT_IMAGE} > /dev/null || true
+    docker pull --quiet ${SONARQUBE_CLI_IMAGE} > /dev/null || true
 }
 
 check_status() {
@@ -231,17 +234,17 @@ start_service() {
 change_password() {
     echo-notice "Changing initial default password..."
 
-    curl -fsSL -u ${USER}:${OLDPASS} \
+    curl -fsSL -u ${USERNAME}:${OLDPASS} \
         ${HOST}/api/users/change_password \
-        -d "login=${USER}" \
-        -d "password=${PASS}" \
+        -d "login=${USERNAME}" \
+        -d "password=${PASSWORD}" \
         -d "previousPassword=${OLDPASS}" >/dev/null
 }
 
 update_libraries() {
     echo-notice "Adding extensions to PHP Library..."
 
-    curl -fsSL -u ${USER}:${PASS} \
+    curl -fsSL -u ${USERNAME}:${PASSWORD} \
         ${HOST}/api/settings/set \
         -d 'key=sonar.php.file.suffixes' \
         -d 'values=php&values=php3&values=php4&values=php5&values=phtml&values=inc&values=module' > /dev/null
@@ -249,7 +252,7 @@ update_libraries() {
 
 delete_project() {
     echo-notice "Deleting Project: ${1}..."
-    curl -fsSL -u ${USER}:${PASS} \
+    curl -fsSL -u ${USERNAME}:${PASSWORD} \
         ${HOST}/api/projects/delete \
         -d "project=${1}"
 }
@@ -262,7 +265,7 @@ create_project() {
 
     echo-notice "Creating Project..."
 
-    curl -fsSL -u ${USER}:${PASS} \
+    curl -fsSL -u ${USERNAME}:${PASSWORD} \
         ${HOST}/api/projects/create \
         -d "name=${PROJECT_NAME}" \
         -d "project=${PROJECT_KEY}" > /dev/null
@@ -278,8 +281,8 @@ run_scanner() {
         -Dsonar.projectKey=${PROJECT_KEY} \
         -Dsonar.sources=. \
         -Dsonar.host.url=${SONARQUBE_CLI_REMOTE_HOST} \
-        -Dsonar.login="${USER}" \
-        -Dsonar.password="${PASS}" > ${LOG_FILE}
+        -Dsonar.login="${USERNAME}" \
+        -Dsonar.password="${PASSWORD}" > ${LOG_FILE}
 }
 
 run_report() {
@@ -288,8 +291,8 @@ run_report() {
     docker run --rm -it -v ${PROJECT_DIRECTORY}:/mnt/reports \
         --link ${SERVICE_NAME} \
         -e SONARQUBE_HOST=${SONARQUBE_CLI_REMOTE_HOST} \
-        -e SONARQUBE_USER="${USER}" \
-        -e SONARQUBE_PASS="${PASS}" \
+        -e SONARQUBE_USER="${USERNAME}" \
+        -e SONARQUBE_PASS="${PASSWORD}" \
         -e SONARQUBE_PROJECTS="${PROJECT_KEY}" \
         ${SONARQUBE_REPORT_IMAGE}
 }
@@ -322,7 +325,7 @@ Options:
                            (Default: ${MAX_TRIES})
 
   -p, --password           Set the password for connecting to the instance of SonarQube/SonarCloud
-                           (Default: ${PASS})
+                           (Default: ${PASSWORD})
 
   -r, --project            Set the project name
                            (Default: ${PROJECT_NAME})
