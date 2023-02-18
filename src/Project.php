@@ -37,7 +37,7 @@ final class Project
     public function getName(): string
     {
         $measures = $this->getMeasuresComponents();
-        return strval($measures['component']['name']);
+        return (string) $measures['component']['name'];
     }
 
     /**
@@ -127,7 +127,7 @@ final class Project
     private function getLastRun(): string
     {
         $response = $this->sonarQube->getProjectAnalyses($this->projectKey);
-        return strval($response['analyses'][0]['date']);
+        return (string) $response['analyses'][0]['date'];
     }
 
     /**
