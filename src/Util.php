@@ -5,7 +5,7 @@ namespace Kanopi\SonarQube;
 /**
  * Utility Class used for altering functions.
  */
-class Util
+final class Util
 {
 
     /**
@@ -21,7 +21,7 @@ class Util
      */
     public static function findMetric(array $data, string $metric): ?string
     {
-        foreach ($data['component']['measures'] AS $measure) {
+        foreach ($data['component']['measures'] as $measure) {
             if ($measure['metric'] === $metric) {
                 return $measure['value'];
             }
@@ -43,7 +43,7 @@ class Util
      */
     public static function findSeverity(array $data, string $metric): ?string
     {
-        foreach ($data['values'] AS $value) {
+        foreach ($data['values'] as $value) {
             if ($value['val'] === $metric) {
                 return $value['count'];
             }
@@ -60,18 +60,18 @@ class Util
      * @param string $component
      *   Component to search for.
      *
-     * @return mixed
+     * @return array
      *   Return the data.
      */
-    public static function findComponent(array $components, string $component): mixed
+    public static function findComponent(array $components, string $component): array
     {
-        foreach ($components AS $item) {
+        foreach ($components as $item) {
             if ($item['key'] === $component) {
                 return $item;
             }
         }
 
-        return null;
+        return [];
     }
 
     /**

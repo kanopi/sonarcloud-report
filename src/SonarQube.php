@@ -8,16 +8,24 @@ use GuzzleHttp\Exception\GuzzleException;
 /**
  * Class SonarQube
  */
-class SonarQube
+final class SonarQube
 {
 
-    protected Client $client;
+    private readonly Client $client;
 
-    protected array $metrics = ['code_smells', 'coverage', 'bugs', 'vulnerabilities', 'security_hotspots', 'duplicated_lines', 'lines', 'ncloc'];
-
-    protected array $ruleItems = [];
-
-    protected array $metricItems = [];
+    /**
+     * @var string[]
+     */
+    private const METRICS = [
+        'code_smells',
+        'coverage',
+        'bugs',
+        'vulnerabilities',
+        'security_hotspots',
+        'duplicated_lines',
+        'lines',
+        'ncloc',
+    ];
 
     /**
      * Constructor
@@ -49,16 +57,16 @@ class SonarQube
      * @param array $query
      *   Query parameters.
      *
-     * @return mixed
+     * @return array
      *   Return the data from the query.
      */
-    protected function query(string $endpoint, array $query = []): mixed
+    private function query(string $endpoint, array $query = []): array
     {
         try {
             $response = $this->client->get($endpoint, ['query' => $query]);
-            return json_decode($response->getBody(), true);
-        } catch (GuzzleException $exception) {
-            echo sprintf("ERROR: %s", $exception->getMessage());
+            return (array)json_decode($response->getBody(), true, 512, JSON_THROW_ON_ERROR);
+        } catch (GuzzleException $guzzleException) {
+            echo sprintf("ERROR: %s", $guzzleException->getMessage());
             die;
         }
     }
@@ -71,12 +79,12 @@ class SonarQube
      * @param array $metrics
      *   List of metrics to return.
      *
-     * @return mixed
+     * @return array
      *   Return data.
      */
-    public function getMeasuresComponents(string $project, array $metrics = []): mixed
+    public function getMeasuresComponents(string $project, array $metrics = []): array
     {
-        $metrics = empty($metrics) ? $this->metrics : $metrics;
+        $metrics = $metrics === [] ? self::METRICS : $metrics;
         return $this->query('/api/measures/component', [
             'component' => $project,
             'metricKeys' => implode(',', $metrics)
@@ -93,10 +101,10 @@ class SonarQube
      * @param int $page
      *   Page number to request and query.
      *
-     * @return mixed
+     * @return array
      *   Return all data.
      */
-    public function getMeasuresComponentsTree(string $project, array $metrics, int $page = 1): mixed
+    public function getMeasuresComponentsTree(string $project, array $metrics, int $page = 1): array
     {
         return $this->query('/api/measures/component_tree', [
            'component' => $project,
@@ -112,10 +120,10 @@ class SonarQube
      * @param int $page
      *   Query specific page number.
      *
-     * @return mixed
+     * @return array
      *   Return all data.
      */
-    public function getMetrics(int $page = 1): mixed
+    public function getMetrics(int $page = 1): array
     {
         return $this->query('/api/metrics/search', [
             'ps' => 500,
@@ -135,10 +143,10 @@ class SonarQube
      * @param array $types
      *   A list of all issue types.
      *
-     * @return mixed
+     * @return array
      *   Return all data.
      */
-    public function getIssuesSearch(string $project, int $page = 1, array $facetTypes = [], array $types = []): mixed
+    public function getIssuesSearch(string $project, int $page = 1, array $facetTypes = [], array $types = []): array
     {
         return $this->query('/api/issues/search', [
             'componentKeys' => $project,
@@ -157,10 +165,10 @@ class SonarQube
      * @param int $page
      *   Query specific page number.
      *
-     * @return mixed
+     * @return array
      *   Return all data.
      */
-    public function getHotSpotsSearch(string $project, int $page = 1): mixed
+    public function getHotSpotsSearch(string $project, int $page = 1): array
     {
         $query = [
             'projectKey' => $project,
@@ -180,10 +188,10 @@ class SonarQube
      * @param string|int $to
      *   Line number to end at.
      *
-     * @return mixed
+     * @return array
      *   Return all data.
      */
-    public function getSourceLines(string $key, string|int $from, string|int $to): mixed
+    public function getSourceLines(string $key, string|int $from, string|int $to): array
     {
         return $this->query('/api/sources/lines', [
             'key' => $key,
@@ -198,10 +206,10 @@ class SonarQube
      * @param string $issueKey
      *   Issue key to query.
      *
-     * @return mixed
+     * @return array
      *   Return all data.
      */
-    public function getSourceSnippet(string $issueKey): mixed
+    public function getSourceSnippet(string $issueKey): array
     {
         return $this->query('/api/sources/issue_snippets', [
             'issueKey' => $issueKey,
@@ -214,10 +222,10 @@ class SonarQube
      * @param string $hotspot
      *   Hotspot ID to query.
      *
-     * @return mixed
+     * @return array
      *   Return all data.
      */
-    public function getHotSpot(string $hotspot): mixed
+    public function getHotSpot(string $hotspot): array
     {
         return $this->query('/api/hotspots/show', [
             'hotspot' => $hotspot,
@@ -230,10 +238,10 @@ class SonarQube
      * @param string $project
      *   Project to query.
      *
-     * @return mixed
+     * @return array
      *   Return all data.
      */
-    public function getProjectAnalyses(string $project): mixed
+    public function getProjectAnalyses(string $project): array
     {
         return $this->query('/api/project_analyses/search', [
             'project' => $project,
@@ -246,10 +254,10 @@ class SonarQube
      * @param string $rule
      *   Rule ID to query.
      *
-     * @return mixed
+     * @return array
      *   Return the data.
      */
-    public function getRule(string $rule): mixed
+    public function getRule(string $rule): array
     {
         return $this->query('/api/rules/show', [
             'key' => $rule,
@@ -262,10 +270,10 @@ class SonarQube
      * @param int $page
      *   Page number to query.
      *
-     * @return mixed
+     * @return array
      *   Return all data.
      */
-    public function searchRules(int $page = 1): mixed
+    public function searchRules(int $page = 1): array
     {
         return $this->query('/api/rules/search', [
             'ps' => 500,
@@ -288,7 +296,7 @@ class SonarQube
      */
     public function continueToNextPage(int &$page, int $perPage, int $total): bool
     {
-        $page++;
+        ++$page;
         return (
             ($page * $perPage < $total) &&
             ($page * $perPage <= 10000)
@@ -301,10 +309,10 @@ class SonarQube
      * @param string $key
      *   File key to query.
      *
-     * @return mixed
+     * @return array
      *   Return all data.
      */
-    public function getDuplications(string $key): mixed
+    public function getDuplications(string $key): array
     {
         return $this->query('/api/duplications/show', [
             'key' => $key,
@@ -319,10 +327,10 @@ class SonarQube
      * @param int $page
      *   Page number to query.
      *
-     * @return mixed
+     * @return array
      *   Return all data.
      */
-    public function getDuplicationsTree(string $project, int $page = 1): mixed
+    public function getDuplicationsTree(string $project, int $page = 1): array
     {
         return $this->getMeasuresComponentsTree($project, [
             'duplicated_lines',
