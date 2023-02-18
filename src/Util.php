@@ -60,10 +60,10 @@ final class Util
      * @param string $component
      *   Component to search for.
      *
-     * @return mixed
+     * @return array
      *   Return the data.
      */
-    public static function findComponent(array $components, string $component): mixed
+    public static function findComponent(array $components, string $component): array
     {
         foreach ($components as $item) {
             if ($item['key'] === $component) {
@@ -71,7 +71,7 @@ final class Util
             }
         }
 
-        return null;
+        return [];
     }
 
     /**

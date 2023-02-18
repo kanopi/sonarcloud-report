@@ -37,7 +37,7 @@ final class Project
     public function getName(): string
     {
         $measures = $this->getMeasuresComponents();
-        return $measures['component']['name'];
+        return strval($measures['component']['name']);
     }
 
     /**
@@ -94,10 +94,10 @@ final class Project
      * @param string $type
      *   Type of items to query.
      *
-     * @return string
+     * @return string|null
      *   Total number of items.
      */
-    private function getTotalMeasures(string $type): string
+    private function getTotalMeasures(string $type): ?string
     {
         $measures = $this->getMeasuresComponents();
         return Util::findMetric($measures, $type);
@@ -109,10 +109,10 @@ final class Project
      * @param string $type
      *   Type of items to query.
      *
-     * @return string
+     * @return string|null
      *   Total number of items.
      */
-    private function getTotalSeverity(string $type): string
+    private function getTotalSeverity(string $type): ?string
     {
         $severities = $this->getSeveritySummary();
         return Util::findSeverity($severities, $type);
@@ -127,16 +127,16 @@ final class Project
     private function getLastRun(): string
     {
         $response = $this->sonarQube->getProjectAnalyses($this->projectKey);
-        return $response['analyses'][0]['date'];
+        return strval($response['analyses'][0]['date']);
     }
 
     /**
      * Get all project measure components.
      *
-     * @return mixed
+     * @return array
      *   Return all data.
      */
-    private function getMeasuresComponents(): mixed
+    private function getMeasuresComponents(): array
     {
         return $this->sonarQube->getMeasuresComponents($this->projectKey);
     }
@@ -150,7 +150,7 @@ final class Project
     private function getSeveritySummary(): array
     {
         $response = $this->sonarQube->getIssuesSearch($this->projectKey, 1, ['severities']);
-        return $response['facets'][0];
+        return (array)$response['facets'][0];
     }
 
     /**
@@ -260,8 +260,9 @@ final class Project
     {
         foreach ($issues as $component => &$items) {
             try {
+                $col = array_column($items['items'], $sortKey);
                 array_multisort(
-                    array_column($items['items'], $sortKey),
+                    $col,
                     SORT_ASC,
                     SORT_REGULAR,
                     array_column($items['items'], 'line'),
