@@ -8,16 +8,24 @@ use GuzzleHttp\Exception\GuzzleException;
 /**
  * Class SonarQube
  */
-class SonarQube
+final class SonarQube
 {
 
-    protected Client $client;
+    private readonly Client $client;
 
-    protected array $metrics = ['code_smells', 'coverage', 'bugs', 'vulnerabilities', 'security_hotspots', 'duplicated_lines', 'lines', 'ncloc'];
-
-    protected array $ruleItems = [];
-
-    protected array $metricItems = [];
+    /**
+     * @var string[]
+     */
+    private const METRICS = [
+        'code_smells',
+        'coverage',
+        'bugs',
+        'vulnerabilities',
+        'security_hotspots',
+        'duplicated_lines',
+        'lines',
+        'ncloc',
+    ];
 
     /**
      * Constructor
@@ -52,13 +60,13 @@ class SonarQube
      * @return mixed
      *   Return the data from the query.
      */
-    protected function query(string $endpoint, array $query = []): mixed
+    private function query(string $endpoint, array $query = []): mixed
     {
         try {
             $response = $this->client->get($endpoint, ['query' => $query]);
-            return json_decode($response->getBody(), true);
-        } catch (GuzzleException $exception) {
-            echo sprintf("ERROR: %s", $exception->getMessage());
+            return json_decode($response->getBody(), true, 512, JSON_THROW_ON_ERROR);
+        } catch (GuzzleException $guzzleException) {
+            echo sprintf("ERROR: %s", $guzzleException->getMessage());
             die;
         }
     }
@@ -76,7 +84,7 @@ class SonarQube
      */
     public function getMeasuresComponents(string $project, array $metrics = []): mixed
     {
-        $metrics = empty($metrics) ? $this->metrics : $metrics;
+        $metrics = $metrics === [] ? self::METRICS : $metrics;
         return $this->query('/api/measures/component', [
             'component' => $project,
             'metricKeys' => implode(',', $metrics)
@@ -288,7 +296,7 @@ class SonarQube
      */
     public function continueToNextPage(int &$page, int $perPage, int $total): bool
     {
-        $page++;
+        ++$page;
         return (
             ($page * $perPage < $total) &&
             ($page * $perPage <= 10000)
