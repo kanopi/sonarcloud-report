@@ -1,11 +1,42 @@
 version: 2.1
 
 orbs:
+  ci-tools: kanopi/ci-tools@2
   docker: circleci/docker@2.2
 
 workflows:
   build-docker-image-only:
     jobs:
+      - ci-tools/composer:
+          tag: '8.1'
+          name: 'phpstan'
+          context: kanopi-code
+          command: 'check:security'
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              only: /.*/
+      - ci-tools/composer:
+          tag: '8.1'
+          name: 'rector'
+          context: kanopi-code
+          command: 'check:rector'
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              only: /.*/
+      - ci-tools/composer:
+          tag: '8.1'
+          name: 'lint'
+          context: kanopi-code
+          command: 'check:code'
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              only: /.*/
       - docker/publish:
           name: "Create edge version"
           image: devkteam/sonarqube-report
@@ -13,6 +44,10 @@ workflows:
           docker-username: DOCKERHUB_USER
           docker-password: DOCKERHUB_PASS
           context: kanopi-code
+          requires:
+            - lint
+            - rector
+            - phpstan
           filters:
             branches:
               only: main
@@ -25,6 +60,10 @@ workflows:
           docker-username: DOCKERHUB_USER
           docker-password: DOCKERHUB_PASS
           context: kanopi-code
+          requires:
+            - lint
+            - rector
+            - phpstan
           filters:
             branches:
               ignore: main
@@ -37,6 +76,10 @@ workflows:
           docker-username: DOCKERHUB_USER
           docker-password: DOCKERHUB_PASS
           context: kanopi-code
+          requires:
+            - lint
+            - rector
+            - phpstan
           filters:
             branches:
               ignore: /.*/
@@ -49,8 +92,12 @@ workflows:
           docker-username: DOCKERHUB_USER
           docker-password: DOCKERHUB_PASS
           context: kanopi-code
+          requires:
+            - lint
+            - rector
+            - phpstan
           filters:
             branches:
               ignore: /.*/
             tags:
-              only: /.*/
+              only: /v([0-9])+\.([0-9])+\.([0-9])+/

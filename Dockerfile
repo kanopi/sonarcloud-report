@@ -32,7 +32,7 @@ COPY . .
 RUN set -xe; \
         curl -fsSL -o /usr/local/bin/composer https://github.com/composer/composer/releases/download/${COMPOSER_VERSION}/composer.phar; \
         chmod +x /usr/local/bin/composer; \
-        composer install;
+        composer install --no-dev;
 
 VOLUME /mnt/reports
 
