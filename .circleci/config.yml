@@ -56,7 +56,7 @@ workflows:
       - docker/publish:
           name: "Create build image"
           image: devkteam/sonarqube-report
-          tag: 'build--${BRANCH}--${CIRCLE_SHA1:0:7}'
+          tag: 'build--${CUSTOM_BRANCH}--${CIRCLE_SHA1:0:7}'
           docker-username: DOCKERHUB_USER
           docker-password: DOCKERHUB_PASS
           context: kanopi-code
@@ -78,7 +78,7 @@ workflows:
       - docker/publish:
           name: "Create latest build image"
           image: devkteam/sonarqube-report
-          tag: 'build--${BRANCH}'
+          tag: 'build--${CUSTOM_BRANCH}'
           docker-username: DOCKERHUB_USER
           docker-password: DOCKERHUB_PASS
           context: kanopi-code
