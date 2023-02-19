@@ -1,5 +1,21 @@
 version: 2.1
 
+build-items: &build-items
+  image: devkteam/sonarqube-report
+  docker-username: DOCKERHUB_USER
+  docker-password: DOCKERHUB_PASS
+  context: kanopi-code
+  before_build:
+    - run:
+        name: Generate Build Tag
+        command: |
+          CUSTOM_BRANCH=$(echo "${CIRCLE_BRANCH}" | sed 's#/#--#' | tr '[:upper:]' '[:lower:]')
+          echo "export CUSTOM_BRANCH='${CUSTOM_BRANCH}'" >> $BASH_ENV
+  requires:
+    - lint
+    - rector
+    - phpstan
+
 orbs:
   ci-tools: kanopi/ci-tools@2
   docker: circleci/docker@2.2
@@ -38,92 +54,45 @@ workflows:
             branches:
               only: /.*/
       - docker/publish:
+          <<: *build-items
           name: "Create edge version"
-          image: devkteam/sonarqube-report
           tag: edge
-          docker-username: DOCKERHUB_USER
-          docker-password: DOCKERHUB_PASS
-          context: kanopi-code
-          requires:
-            - lint
-            - rector
-            - phpstan
           filters:
             branches:
               only: main
             tags:
               ignore: /.*/
       - docker/publish:
+          <<: *build-items
           name: "Create build image"
-          image: devkteam/sonarqube-report
           tag: 'build--${CUSTOM_BRANCH}--${CIRCLE_SHA1:0:7}'
-          docker-username: DOCKERHUB_USER
-          docker-password: DOCKERHUB_PASS
-          context: kanopi-code
-          before_build:
-            - run:
-                name: Generate Build Tag
-                command: |
-                  CUSTOM_BRANCH=$(echo "${CIRCLE_BRANCH}" | sed 's#/#--#' | tr '[:upper:]' '[:lower:]')
-                  echo "export CUSTOM_BRANCH='${CUSTOM_BRANCH}'" >> $BASH_ENV
-          requires:
-            - lint
-            - rector
-            - phpstan
           filters:
             branches:
               ignore: main
             tags:
               ignore: /.*/
       - docker/publish:
+          <<: *build-items
           name: "Create latest build image"
-          image: devkteam/sonarqube-report
           tag: 'build--${CUSTOM_BRANCH}'
-          docker-username: DOCKERHUB_USER
-          docker-password: DOCKERHUB_PASS
-          context: kanopi-code
-          before_build:
-            - run:
-                name: Generate Build Tag
-                command: |
-                  CUSTOM_BRANCH=$(echo "${CIRCLE_BRANCH}" | sed 's#/#--#' | tr '[:upper:]' '[:lower:]')
-                  echo "export CUSTOM_BRANCH='${CUSTOM_BRANCH}'" >> $BASH_ENV
-          requires:
-            - lint
-            - rector
-            - phpstan
           filters:
             branches:
               ignore: main
             tags:
               ignore: /.*/
       - docker/publish:
+          <<: *build-items
           name: "Create new Version Tag"
-          image: devkteam/sonarqube-report
           tag: '${CIRCLE_TAG}'
-          docker-username: DOCKERHUB_USER
-          docker-password: DOCKERHUB_PASS
-          context: kanopi-code
-          requires:
-            - lint
-            - rector
-            - phpstan
           filters:
             branches:
               ignore: /.*/
             tags:
               only: /.*/
       - docker/publish:
+          <<: *build-items
           name: "Create Latest Tag"
-          image: devkteam/sonarqube-report
           tag: 'latest'
-          docker-username: DOCKERHUB_USER
-          docker-password: DOCKERHUB_PASS
-          context: kanopi-code
-          requires:
-            - lint
-            - rector
-            - phpstan
           filters:
             branches:
               ignore: /.*/
