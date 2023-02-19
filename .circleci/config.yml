@@ -56,10 +56,38 @@ workflows:
       - docker/publish:
           name: "Create latest build image"
           image: devkteam/sonarqube-report
-          tag: 'build-${CIRCLE_SHA1:0:7}'
+          tag: 'build--${BRANCH}--${CIRCLE_SHA1:0:7}'
           docker-username: DOCKERHUB_USER
           docker-password: DOCKERHUB_PASS
           context: kanopi-code
+          before_build:
+            - run:
+                name: Generate Build Tag
+                command: |
+                  CUSTOM_BRANCH=$(echo "${CIRCLE_BRANCH}" | sed 's#/#--#' | tr '[:upper:]' '[:lower:]')
+                  echo "export CUSTOM_BRANCH='${CUSTOM_BRANCH}'" >> $BASHENV
+          requires:
+            - lint
+            - rector
+            - phpstan
+          filters:
+            branches:
+              ignore: main
+            tags:
+              ignore: /.*/
+      - docker/publish:
+          name: "Create latest build image"
+          image: devkteam/sonarqube-report
+          tag: 'build--${BRANCH}'
+          docker-username: DOCKERHUB_USER
+          docker-password: DOCKERHUB_PASS
+          context: kanopi-code
+          before_build:
+            - run:
+                name: Generate Build Tag
+                command: |
+                  CUSTOM_BRANCH=$(echo "${CIRCLE_BRANCH}" | sed 's#/#--#' | tr '[:upper:]' '[:lower:]')
+                  echo "export CUSTOM_BRANCH='${CUSTOM_BRANCH}'" >> $BASHENV
           requires:
             - lint
             - rector
