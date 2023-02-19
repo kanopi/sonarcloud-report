@@ -54,7 +54,7 @@ workflows:
             tags:
               ignore: /.*/
       - docker/publish:
-          name: "Create latest build image"
+          name: "Create build image"
           image: devkteam/sonarqube-report
           tag: 'build--${BRANCH}--${CIRCLE_SHA1:0:7}'
           docker-username: DOCKERHUB_USER
@@ -65,7 +65,7 @@ workflows:
                 name: Generate Build Tag
                 command: |
                   CUSTOM_BRANCH=$(echo "${CIRCLE_BRANCH}" | sed 's#/#--#' | tr '[:upper:]' '[:lower:]')
-                  echo "export CUSTOM_BRANCH='${CUSTOM_BRANCH}'" >> $BASHENV
+                  echo "export CUSTOM_BRANCH='${CUSTOM_BRANCH}'" >> $BASH_ENV
           requires:
             - lint
             - rector
@@ -87,7 +87,7 @@ workflows:
                 name: Generate Build Tag
                 command: |
                   CUSTOM_BRANCH=$(echo "${CIRCLE_BRANCH}" | sed 's#/#--#' | tr '[:upper:]' '[:lower:]')
-                  echo "export CUSTOM_BRANCH='${CUSTOM_BRANCH}'" >> $BASHENV
+                  echo "export CUSTOM_BRANCH='${CUSTOM_BRANCH}'" >> $BASH_ENV
           requires:
             - lint
             - rector
