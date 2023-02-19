@@ -64,6 +64,15 @@ workflows:
               ignore: /.*/
       - docker/publish:
           <<: *build-items
+          name: "Create edge version"
+          tag: "edge--${CIRCLE_SHA1:0:7}"
+          filters:
+            branches:
+              only: main
+            tags:
+              ignore: /.*/
+      - docker/publish:
+          <<: *build-items
           name: "Create build image"
           tag: 'build--${CUSTOM_BRANCH}--${CIRCLE_SHA1:0:7}'
           filters:
