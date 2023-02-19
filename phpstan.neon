@@ -1,0 +1,9 @@
+parameters:
+    level: max
+    paths:
+        - src
+    excludePaths:
+        - vendor
+    ignoreErrors:
+        - '#has no value type specified in iterable type array#'
+        - '#with no value type specified in iterable type array#'

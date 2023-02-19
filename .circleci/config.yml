@@ -1,56 +1,109 @@
 version: 2.1
 
+build-items: &build-items
+  image: devkteam/sonarqube-report
+  docker-username: DOCKERHUB_USER
+  docker-password: DOCKERHUB_PASS
+  context: kanopi-code
+  before_build:
+    - run:
+        name: Generate Build Tag
+        command: |
+          CUSTOM_BRANCH=$(echo "${CIRCLE_BRANCH}" | sed 's#/#--#' | tr '[:upper:]' '[:lower:]')
+          echo "export CUSTOM_BRANCH='${CUSTOM_BRANCH}'" >> $BASH_ENV
+  requires:
+    - lint
+    - rector
+    - phpstan
+
 orbs:
+  ci-tools: kanopi/ci-tools@2
   docker: circleci/docker@2.2
 
 workflows:
   build-docker-image-only:
     jobs:
-      - docker/publish:
-          name: "Create edge version"
-          image: devkteam/sonarqube-report
-          tag: edge
-          docker-username: DOCKERHUB_USER
-          docker-password: DOCKERHUB_PASS
+      - ci-tools/composer:
+          tag: '8.1'
+          name: 'phpstan'
           context: kanopi-code
+          command: 'check:security'
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              only: /.*/
+      - ci-tools/composer:
+          tag: '8.1'
+          name: 'rector'
+          context: kanopi-code
+          command: 'check:rector'
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              only: /.*/
+      - ci-tools/composer:
+          tag: '8.1'
+          name: 'lint'
+          context: kanopi-code
+          command: 'check:code'
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              only: /.*/
+      - docker/publish:
+          <<: *build-items
+          name: "Create edge version"
+          tag: edge
           filters:
             branches:
               only: main
             tags:
               ignore: /.*/
       - docker/publish:
-          name: "Create latest build image"
-          image: devkteam/sonarqube-report
-          tag: 'build-${CIRCLE_SHA1:0:7}'
-          docker-username: DOCKERHUB_USER
-          docker-password: DOCKERHUB_PASS
-          context: kanopi-code
+          <<: *build-items
+          name: "Create edge version"
+          tag: "edge--${CIRCLE_SHA1:0:7}"
+          filters:
+            branches:
+              only: main
+            tags:
+              ignore: /.*/
+      - docker/publish:
+          <<: *build-items
+          name: "Create build image"
+          tag: 'build--${CUSTOM_BRANCH}--${CIRCLE_SHA1:0:7}'
           filters:
             branches:
               ignore: main
             tags:
               ignore: /.*/
       - docker/publish:
+          <<: *build-items
+          name: "Create latest build image"
+          tag: 'build--${CUSTOM_BRANCH}'
+          filters:
+            branches:
+              ignore: main
+            tags:
+              ignore: /.*/
+      - docker/publish:
+          <<: *build-items
           name: "Create new Version Tag"
-          image: devkteam/sonarqube-report
           tag: '${CIRCLE_TAG}'
-          docker-username: DOCKERHUB_USER
-          docker-password: DOCKERHUB_PASS
-          context: kanopi-code
           filters:
             branches:
               ignore: /.*/
             tags:
               only: /.*/
       - docker/publish:
+          <<: *build-items
           name: "Create Latest Tag"
-          image: devkteam/sonarqube-report
           tag: 'latest'
-          docker-username: DOCKERHUB_USER
-          docker-password: DOCKERHUB_PASS
-          context: kanopi-code
           filters:
             branches:
               ignore: /.*/
             tags:
-              only: /.*/
+              only: /v([0-9])+\.([0-9])+\.([0-9])+/
