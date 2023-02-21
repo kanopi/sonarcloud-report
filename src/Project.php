@@ -300,7 +300,11 @@ final class Project
                     $items['items']
                 );
             } catch (ValueError $valueError) {
-                throw new Exception(sprintf('ERROR: %s with %s', $valueError->getMessage(), $component), $valueError->getCode(), $valueError);
+                throw new Exception(
+                    sprintf('ERROR: %s with %s', $valueError->getMessage(), $component),
+                    $valueError->getCode(),
+                    $valueError
+                );
             }
         }
 
