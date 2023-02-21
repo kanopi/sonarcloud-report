@@ -20,6 +20,7 @@ orbs:
   ci-tools: kanopi/ci-tools@2
   docker: circleci/docker@2.2
 
+jobs:
   phpunit:
     docker:
       - image: cimg/php:8.1
@@ -83,6 +84,7 @@ workflows:
   build-docker-image-only:
     jobs:
       - phpunit:
+          context: kanopi-code
           command: 'check:security'
           filters:
             tags:
