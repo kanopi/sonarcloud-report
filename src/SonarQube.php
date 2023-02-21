@@ -81,7 +81,7 @@ final class SonarQube
             $response = $this->client->get($endpoint, ['query' => $query]);
             return (array)json_decode($response->getBody(), true, 512, JSON_THROW_ON_ERROR);
         } catch (GuzzleException | JsonException $exception) {
-            throw new Exception(sprintf('ERROR: %s', $exception->getMessage()));
+            throw new Exception(sprintf('ERROR: %s', $exception->getMessage()), $exception->getCode(), $exception);
         }
     }
 

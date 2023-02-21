@@ -50,6 +50,7 @@ final class Project
             $measures = $this->getMeasuresComponents();
             $this->name = (string)$measures['component']['name'];
         }
+
         return $this->name;
     }
 
@@ -247,7 +248,7 @@ final class Project
                 }
 
                 // if line isn't set use the textRange attribute
-                $issue['line'] = $issue['line'] ?? ($issue['textRange']['startLine'] ?? '');
+                $issue['line'] ??= $issue['textRange']['startLine'] ?? '';
 
                 $issue['severity_level'] = Util::getSeverityLevel($issue['severity']);
 
@@ -299,7 +300,7 @@ final class Project
                     $items['items']
                 );
             } catch (ValueError $valueError) {
-                throw new Exception(sprintf('ERROR: %s with %s', $valueError->getMessage(), $component));
+                throw new Exception(sprintf('ERROR: %s with %s', $valueError->getMessage(), $component), $valueError->getCode(), $valueError);
             }
         }
 
@@ -363,10 +364,7 @@ final class Project
     {
         $issues = $this->queryElements('getIssuesSearch', 'issues', static function ($issue) {
             // if line isn't set use the textRange attribute
-            if (!isset($issue['line'])) {
-                $issue['line'] = $issue['textRange']['startLine'] ?? '';
-            }
-
+            $issue['line'] ??= $issue['textRange']['startLine'] ?? '';
             $issue['severity_level'] = Util::getSeverityLevel($issue['severity']);
             return $issue;
         });

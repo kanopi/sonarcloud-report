@@ -82,6 +82,13 @@ orbs:
 workflows:
   build-docker-image-only:
     jobs:
+      - phpunit:
+          command: 'check:security'
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              ignore: main
       - ci-tools/composer:
           tag: '8.1'
           name: 'phpstan'
