@@ -2,6 +2,8 @@
 
 namespace Kanopi\SonarQube;
 
+use Exception;
+use JsonException;
 use ValueError;
 
 /**
@@ -12,9 +14,17 @@ use ValueError;
  */
 final class Project
 {
-    private array $summary;
+    private array $summary = [];
 
-    private array $items;
+    private array $items = [];
+
+    private string $name = '';
+
+    private array $severities = [];
+
+    private array $measures = [];
+
+    private string $lastRun = '';
 
     /**
      * Constructor
@@ -36,8 +46,11 @@ final class Project
      */
     public function getName(): string
     {
-        $measures = $this->getMeasuresComponents();
-        return (string) $measures['component']['name'];
+        if ($this->name === '') {
+            $measures = $this->getMeasuresComponents();
+            $this->name = (string)$measures['component']['name'];
+        }
+        return $this->name;
     }
 
     /**
@@ -73,6 +86,8 @@ final class Project
      *
      * @return array
      *   Return all data.
+     *
+     * @throws Exception
      */
     public function getItems(): array
     {
@@ -126,8 +141,12 @@ final class Project
      */
     private function getLastRun(): string
     {
-        $response = $this->sonarQube->getProjectAnalyses($this->projectKey);
-        return (string) $response['analyses'][0]['date'];
+        if ($this->lastRun === '') {
+            $response = $this->sonarQube->getProjectAnalyses($this->projectKey);
+            $this->lastRun = (string)$response['analyses'][0]['date'];
+        }
+
+        return $this->lastRun;
     }
 
     /**
@@ -138,7 +157,11 @@ final class Project
      */
     private function getMeasuresComponents(): array
     {
-        return $this->sonarQube->getMeasuresComponents($this->projectKey);
+        if ($this->measures === []) {
+            $this->measures = $this->sonarQube->getMeasuresComponents($this->projectKey);
+        }
+
+        return $this->measures;
     }
 
     /**
@@ -149,8 +172,11 @@ final class Project
      */
     private function getSeveritySummary(): array
     {
-        $response = $this->sonarQube->getIssuesSearch($this->projectKey, 1, ['severities']);
-        return (array)$response['facets'][0];
+        if ($this->severities === []) {
+            $this->severities = $this->sonarQube->getIssuesSearch($this->projectKey, 1, ['severities']);
+        }
+
+        return (array)$this->severities['facets'][0];
     }
 
     /**
@@ -200,6 +226,8 @@ final class Project
      *
      * @return array
      *   Return all data.
+     *
+     * @throws Exception
      */
     private function getProjectVulnerabilities(): array
     {
@@ -219,9 +247,7 @@ final class Project
                 }
 
                 // if line isn't set use the textRange attribute
-                if (!isset($issue['line'])) {
-                    $issue['line'] = $issue['textRange']['startLine'] ?? '';
-                }
+                $issue['line'] = $issue['line'] ?? ($issue['textRange']['startLine'] ?? '');
 
                 $issue['severity_level'] = Util::getSeverityLevel($issue['severity']);
 
@@ -255,6 +281,8 @@ final class Project
      *
      * @return array
      *   Return the sorted data.
+     *
+     * @throws Exception
      */
     private function sortElements(array $issues, string $sortKey): array
     {
@@ -271,8 +299,7 @@ final class Project
                     $items['items']
                 );
             } catch (ValueError $valueError) {
-                echo sprintf('ERROR: %s with %s', $valueError->getMessage(), $component);
-                die;
+                throw new Exception(sprintf('ERROR: %s with %s', $valueError->getMessage(), $component));
             }
         }
 
@@ -329,6 +356,8 @@ final class Project
      *
      * @return array
      *   Return all data.
+     *
+     * @throws Exception
      */
     private function getProjectIssues(): array
     {
@@ -350,6 +379,8 @@ final class Project
      *
      * @return array
      *   Return all data.
+     *
+     * @throws Exception
      */
     private function getProjectHotSpots(): array
     {
@@ -414,6 +445,8 @@ final class Project
      *
      * @return array
      *   Return all data.
+     *
+     * @throws JsonException
      */
     private function getProjectDuplicationsSummary(): array
     {

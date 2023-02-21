@@ -20,6 +20,65 @@ orbs:
   ci-tools: kanopi/ci-tools@2
   docker: circleci/docker@2.2
 
+  phpunit:
+    docker:
+      - image: cimg/php:8.1
+        auth:
+          username: $DOCKERHUB_USER
+          password: $DOCKERHUB_PASS
+    steps:
+      - checkout
+      - run:
+          name: Setup
+          command: |
+            # Install BC Tool
+            sudo apt update
+            curl -o /tmp/bc.deb -fsSL http://archive.ubuntu.com/ubuntu/pool/main/b/bc/bc_1.07.1-3build1_amd64.deb
+            sudo dpkg -i /tmp/bc.deb 
+            # Install XDebug
+            sudo pecl update-channels
+            sudo pecl install xdebug
+            #sudo cp .circleci/config/xdebug.ini /etc/php.d/xdebug.ini
+            # Install Xidel
+            curl -fsSL https://github.com/benibela/xidel/releases/download/Xidel_0.9.8/xidel-0.9.8.linux64.tar.gz | tar xvz -C /tmp/
+            chmod +x /tmp/xidel && sudo mv /tmp/xidel /usr/sbin/
+      - restore_cache:
+          keys:
+            - composer-cache-{{ checksum "composer.lock" }}
+            - composer-cache-
+      - run:
+          name: build assets
+          command: composer install --optimize-autoloader
+      - save_cache:
+          key: composer-cache-{{ checksum "composer.lock" }}
+          paths:
+            - vendor
+      - run:
+          name: Run PHPUnit
+          command: composer -n phpunit
+      - run:
+          name: Check Overage
+          command: |
+            PERCENTAGE=$(xidel -s --xpath "string(//phpunit/project/directory/totals/lines/@percent)" reports/xml/index.xml)
+            PASSING=85
+            OUTCOME=$(echo "${PERCENTAGE} < ${PASSING}" | bc)
+            echo "# PHPUnit Code Coverage" | tee -a /tmp/report.md
+            echo "Percent: ${PERCENTAGE}" | tee -a /tmp/report.md
+            echo "Passing: ${PASSING}" | tee -a /tmp/report.md
+            echo "" | tee -a /tmp/report.md
+            echo "[Report](https://output.circle-artifacts.com/output/job/${CIRCLE_WORKFLOW_JOB_ID}/artifacts/0/~/project/reports/index.html)" | tee -a /tmp/report.md
+            if [[ "${OUTCOME}" == "1" ]]; then
+              echo "Percentage does not pass threshold."
+              exit 1
+            fi
+      - ci-tools/post-to-github-commit:
+          body: '@/tmp/report.md'
+          when: always
+      - store_test_results:
+          path: reports/report.xml
+      - store_artifacts:
+          path: reports
+
 workflows:
   build-docker-image-only:
     jobs:

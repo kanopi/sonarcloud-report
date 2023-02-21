@@ -2,16 +2,16 @@
 
 namespace Kanopi\SonarQube;
 
+use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use JsonException;
 
 /**
  * Class SonarQube
  */
 final class SonarQube
 {
-
-    private readonly Client $client;
 
     /**
      * @var string[]
@@ -30,16 +30,28 @@ final class SonarQube
     /**
      * Constructor
      *
+     * @param Client $client
+     *   Guzzle Client.
+     */
+    public function __construct(private readonly Client $client)
+    {
+    }
+
+    /**
+     * Create new instance.
+     *
      * @param string $host
      *   Host name of SonarQube service.
      * @param string $user
      *   Username for authentication.
      * @param string $pass
      *   Password for authentication.
+     *
+     * @return self
      */
-    public function __construct(string $host, string $user, string $pass)
+    public static function create(string $host, string $user, string $pass): self
     {
-        $this->client = new Client([
+        $client = new Client([
             'base_uri' => $host,
             'auth' => [$user, $pass],
             'headers' => [
@@ -47,6 +59,7 @@ final class SonarQube
                 'Accept' => 'application/json',
             ]
         ]);
+        return new SonarQube($client);
     }
 
     /**
@@ -59,15 +72,16 @@ final class SonarQube
      *
      * @return array
      *   Return the data from the query.
+     *
+     * @throws Exception
      */
     private function query(string $endpoint, array $query = []): array
     {
         try {
             $response = $this->client->get($endpoint, ['query' => $query]);
             return (array)json_decode($response->getBody(), true, 512, JSON_THROW_ON_ERROR);
-        } catch (GuzzleException $guzzleException) {
-            echo sprintf("ERROR: %s", $guzzleException->getMessage());
-            die;
+        } catch (GuzzleException | JsonException $exception) {
+            throw new Exception(sprintf('ERROR: %s', $exception->getMessage()));
         }
     }
 
@@ -81,6 +95,8 @@ final class SonarQube
      *
      * @return array
      *   Return data.
+     *
+     * @throws Exception
      */
     public function getMeasuresComponents(string $project, array $metrics = []): array
     {
@@ -103,6 +119,8 @@ final class SonarQube
      *
      * @return array
      *   Return all data.
+     *
+     * @throws Exception
      */
     public function getMeasuresComponentsTree(string $project, array $metrics, int $page = 1): array
     {
@@ -122,6 +140,8 @@ final class SonarQube
      *
      * @return array
      *   Return all data.
+     *
+     * @throws Exception
      */
     public function getMetrics(int $page = 1): array
     {
@@ -145,6 +165,8 @@ final class SonarQube
      *
      * @return array
      *   Return all data.
+     *
+     * @throws Exception
      */
     public function getIssuesSearch(string $project, int $page = 1, array $facetTypes = [], array $types = []): array
     {
@@ -167,15 +189,16 @@ final class SonarQube
      *
      * @return array
      *   Return all data.
+     *
+     * @throws Exception
      */
     public function getHotSpotsSearch(string $project, int $page = 1): array
     {
-        $query = [
+        return $this->query('/api/hotspots/search', [
             'projectKey' => $project,
             'ps' => 500,
             'p' => $page,
-        ];
-        return $this->query('/api/hotspots/search', $query);
+        ]);
     }
 
     /**
@@ -190,6 +213,8 @@ final class SonarQube
      *
      * @return array
      *   Return all data.
+     *
+     * @throws Exception
      */
     public function getSourceLines(string $key, string|int $from, string|int $to): array
     {
@@ -208,6 +233,8 @@ final class SonarQube
      *
      * @return array
      *   Return all data.
+     *
+     * @throws Exception
      */
     public function getSourceSnippet(string $issueKey): array
     {
@@ -224,6 +251,8 @@ final class SonarQube
      *
      * @return array
      *   Return all data.
+     *
+     * @throws Exception
      */
     public function getHotSpot(string $hotspot): array
     {
@@ -240,6 +269,8 @@ final class SonarQube
      *
      * @return array
      *   Return all data.
+     *
+     * @throws Exception
      */
     public function getProjectAnalyses(string $project): array
     {
@@ -256,6 +287,8 @@ final class SonarQube
      *
      * @return array
      *   Return the data.
+     *
+     * @throws Exception
      */
     public function getRule(string $rule): array
     {
@@ -272,6 +305,8 @@ final class SonarQube
      *
      * @return array
      *   Return all data.
+     *
+     * @throws Exception
      */
     public function searchRules(int $page = 1): array
     {
@@ -290,16 +325,18 @@ final class SonarQube
      *   Number of items available per page.
      * @param int $total
      *   Total number of items across all pages.
+     * @param int $max
+     *   The max number of items that can be searched across.
      *
      * @return bool
      *   Can continue to the next page.
      */
-    public function continueToNextPage(int &$page, int $perPage, int $total): bool
+    public function continueToNextPage(int &$page, int $perPage, int $total, int $max = 10000): bool
     {
         ++$page;
         return (
             ($page * $perPage < $total) &&
-            ($page * $perPage <= 10000)
+            ($page * $perPage <= $max)
         );
     }
 
@@ -311,6 +348,8 @@ final class SonarQube
      *
      * @return array
      *   Return all data.
+     *
+     * @throws Exception
      */
     public function getDuplications(string $key): array
     {
@@ -329,6 +368,8 @@ final class SonarQube
      *
      * @return array
      *   Return all data.
+     *
+     * @throws Exception
      */
     public function getDuplicationsTree(string $project, int $page = 1): array
     {
