@@ -85,7 +85,6 @@ workflows:
     jobs:
       - phpunit:
           context: kanopi-code
-          command: 'check:security'
           filters:
             tags:
               ignore: /.*/
