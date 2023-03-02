@@ -23,30 +23,31 @@ lightmagenta='\033[0;95;49m'
 lightmagenta_bg='\033[0;105;30m'
 NC='\033[0m'
 
+if [[ -f .env ]]; then
+  . ./.env
+fi
+
 # Configurable Variables
 PASSWORD=${PASSWORD:-password}
 USERNAME=${USERNAME:-admin}
-PORT=${PORT:-"9000"}
-HOST=${HOST:-"http://127.0.0.1:${PORT}"}
+PORT=${PORT:-9000}
+HOST=${HOST:-"http://127.0.0.1:9000"}
 MAX_TRIES=${MAX_TRIES:-3}
 SLEEPTIME=${SLEEPTIME:-90}
 PROJECT_DIRECTORY=${PROJECT_DIRECTORY:-$(pwd)}
-PROJECT_NAME=$(basename ${PROJECT_DIRECTORY})
-PROJECT_NAME=${PROJECT_NAME:-"Test Project"}
-IMAGE_TAG=${IMAGE_TAG:-"8.9-community"}
+PROJECT_NAME=${PROJECT_NAME:-$(basename ${PROJECT_DIRECTORY})}
 SERVICE_NAME=${SERVICE_NAME:-sonarqube}
 
-SONARQUBE_CLI_REMOTE_HOST=${SONARQUBE_CLI_REMOTE_HOST:-"http://sonarqube:${PORT}"}
-
-SONARQUBE_SERVICE_IMAGE="sonarqube:${IMAGE_TAG}"
-SONARQUBE_REPORT_IMAGE="devkteam/sonarqube-report:${SONARQUBE_REPORT_IMAGE_TAG:-latest}"
-SONARQUBE_CLI_IMAGE="sonarsource/sonar-scanner-cli:latest"
+SONARQUBE_CLI_REMOTE_HOST=${SONARQUBE_CLI_REMOTE_HOST:-"http://${SERVICE_NAME}:9000"}
+SONARQUBE_SERVICE_IMAGE=${SONARQUBE_SERVICE_IMAGE:-"sonarqube:9-community"}
+SONARQUBE_REPORT_IMAGE=${SONARQUBE_REPORT_IMAGE:-"devkteam/sonarqube-report:latest"}
+SONARQUBE_CLI_IMAGE=${SONARQUBE_CLI_IMAGE:-"sonarsource/sonar-scanner-cli:latest"}
 CLEANUP=${CLEANUP}
 
 # Not Configurable
-PROJECT_KEY=$(echo "${PROJECT_NAME}" | sed "s/[ |-]/_/g" | sed 's/[^a-zA-Z_]//g' | tr '[:upper:]' '[:lower:]')
+PROJECT_KEY=${PROJECT_KEY:-$(echo "${PROJECT_NAME}" | sed "s/[ |-]/_/g" | sed 's/[^a-zA-Z_]//g' | tr '[:upper:]' '[:lower:]')}
 OLDPASS=admin
-LOG_FILE=${LOG_FILE:-"/tmp/${PROJECT_KEY}.sonarqube.log"}
+LOG_FILE=${LOG_FILE:-"/tmp/sonarqube.log"}
 TRIES=0
 
 # Find Version of Python
@@ -146,7 +147,7 @@ start_sonarqube() {
     docker run -itd --rm \
         --name ${SERVICE_NAME} \
         -p ${PORT}:${PORT} \
-        sonarqube:${IMAGE_TAG} > /dev/null
+        ${SONARQUBE_SERVICE_IMAGE} > /dev/null
 }
 
 sonarqube_running() {
@@ -391,6 +392,11 @@ case "$1" in
         fi
 
         echo-green-bg "Completed"
+        ;;
+    start)
+        check_status
+        pull_latest_images
+        start_service
         ;;
     run)
         check_status

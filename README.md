@@ -4,6 +4,10 @@ The following uses the SonarQube API to build an exportable report based on
 the items that are found within the scan. This works for both hosted solution 
 and a local copy.
 
+## Requirements
+
+Docker is the only tool that is needed for this to run.
+
 ## Generating Report
 
 ### Using the Docker Image
@@ -21,6 +25,26 @@ docker -it --rm \
 ```
 
 #### Environment Variables
+
+Environment variables can be used by either exporting them, or by using a `.env` file.
+
+| Variable                  | Default                              | Description                                                                                           |
+|---------------------------|--------------------------------------|-------------------------------------------------------------------------------------------------------|
+| USERNAME                  | admin                                | Username used for logging into SonarQube Service                                                      |
+| PASSWORD                  | password                             | Password used for logging into SonarQube Service                                                      |
+| HOST                      | http://127.0.0.1:9000                | Hostname to communicate with SonarQube from the host machine                                          |
+| SERVICE_NAME              | sonarqube                            | When setting up locally what is the name of the service/container to use.                             |
+| MAX_TRIES                 | 3                                    | How many attempts should be made before everything fails                                              |
+| SLEEPTIME                 | 90                                   | How long should the requests wait before they check again.<br>Used when setting up SonarQube locally. |
+| SONARQUBE_SERVICE_IMAGE   | sonarqube:9-community                | SonarQube Docker image to use for local setup                                                         |
+| PROJECT_DIRECTORY         | (current directory)                  | Location to run the scan from                                                                         |
+| PROJECT_NAME              | (current directory)                  | Name of the project to create in SonarQube service                                                    |
+| PROJECT_KEY               | (uses project name)                  | Project key within SonarQube service to pull data for                                                 |
+| SONARQUBE_CLI_REMOTE_HOST | http://sonarqube:9000                | Remote host to use for sending code scan                                                              |
+| SONARQUBE_CLI_IMAGE       | sonarsource/sonar-scanner-cli:latest | Image name to use for running                                                                         |
+| SONARQUBE_REPORT_IMAGE    | devkteam/sonarqube-report:latest     | Docker image name to use for generating the report                                                    |
+| CLEANUP                   | (blank)                              | If set will delete and remove all services after running                                              |
+| LOG_FILE                  | /tmp/sonarqube.log                   | Where should all output be sent to for reviewing                                                      |
 
 ### Using PHP Source
 
