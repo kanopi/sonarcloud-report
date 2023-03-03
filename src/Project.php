@@ -389,6 +389,8 @@ final class Project
         $hotspots = $this->queryElements('getHotSpotsSearch', 'hotspots', function ($hotspot) {
             $hotspot['vulnerability_level'] = Util::getVulnerabilityLevel($hotspot['vulnerabilityProbability']);
 
+            $hotspot['line'] ??= $issue['textRange']['startLine'] ?? '';
+
             $source = $this->sonarQube->getSourceSnippet($hotspot['key']);
             $hotspot['source'] = array_reduce(
                 $source[$hotspot['component']]['sources'] ?? [],
