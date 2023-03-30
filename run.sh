@@ -41,7 +41,7 @@ SERVICE_NAME=${SERVICE_NAME:-sonarqube}
 SONARQUBE_CLI_REMOTE_HOST=${SONARQUBE_CLI_REMOTE_HOST:-"http://${SERVICE_NAME}:9000"}
 SONARQUBE_SERVICE_IMAGE=${SONARQUBE_SERVICE_IMAGE:-"sonarqube:9-community"}
 SONARQUBE_REPORT_IMAGE=${SONARQUBE_REPORT_IMAGE:-"devkteam/sonarqube-report:latest"}
-SONARQUBE_CLI_IMAGE=${SONARQUBE_CLI_IMAGE:-"sonarsource/sonar-scanner-cli:latest"}
+SONARQUBE_CLI_IMAGE=${SONARQUBE_CLI_IMAGE:-"devkteam/sonar-scanner-cli:latest"}
 CLEANUP=${CLEANUP}
 
 # Not Configurable
