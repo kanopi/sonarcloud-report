@@ -1,16 +1,18 @@
-# SonarQube Report Generator
+# Security Report Generator
+
+## SonarQube Report Generator
 
 The following uses the SonarQube API to build an exportable report based on 
 the items that are found within the scan. This works for both hosted solution 
 and a local copy.
 
-## Requirements
+### Requirements
 
 Docker is the only tool that is needed for this to run.
 
-## Generating Report
+### Generating Report
 
-### Using the Docker Image
+#### Using the Docker Image
 
 Running the docker image can be as simple as running the following:
 
@@ -24,7 +26,7 @@ docker -it --rm \
   devkteam/sonarqube-report:latest
 ```
 
-#### Environment Variables
+##### Environment Variables
 
 Environment variables can be used by either exporting them, or by using a `.env` file.
 
@@ -46,7 +48,7 @@ Environment variables can be used by either exporting them, or by using a `.env`
 | CLEANUP                   | (blank)                              | If set will delete and remove all services after running                                              |
 | LOG_FILE                  | /tmp/sonarqube.log                   | Where should all output be sent to for reviewing                                                      |
 
-### Using PHP Source
+#### Using PHP Source
 
 Clone the source code
 
@@ -74,7 +76,7 @@ Run the `run.php` script
 ./run.php
 ```
 
-## Building From Source
+### Building From Source
 
 To build the image from source.
 
@@ -82,11 +84,25 @@ To build the image from source.
 make build
 ```
 
-## Running full process
+### Running full process
 
 Included as part of this is the full process of setting up a local instance of SonarQube and running the scanner on the 
 current codebase.
 
 ```shell
-bash <(curl -fsSL https://raw.githubusercontent.com/kanopi/sonarqube-report/main/run.sh) run
+bash <(curl -fsSL https://raw.githubusercontent.com/kanopi/security-report/main/run.sh) run
+```
+
+## Pantheon Log Report Generator
+
+The following generates a report using GoAccess. The following will generate an HTML report.
+
+### Requirements
+
+Docker is the only tool that is needed for this to run.
+
+### Running full process
+
+```shell
+SITE_UUID=1a5b3e19-01af-4f19-ad34-abe5489370d0 bash <(curl -fsSL https://raw.githubusercontent.com/kanopi/security-report/main/collect-logs.sh)
 ```
