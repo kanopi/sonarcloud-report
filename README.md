@@ -90,7 +90,7 @@ Included as part of this is the full process of setting up a local instance of S
 current codebase.
 
 ```shell
-bash <(curl -fsSL https://raw.githubusercontent.com/kanopi/security-report/main/run.sh) run
+bash <(curl -fsSL https://raw.githubusercontent.com/kanopi/security-reports/main/run.sh) run
 ```
 
 ## Pantheon Log Report Generator
@@ -104,5 +104,5 @@ Docker is the only tool that is needed for this to run.
 ### Running full process
 
 ```shell
-SITE_UUID=1a5b3e19-01af-4f19-ad34-abe5489370d0 bash <(curl -fsSL https://raw.githubusercontent.com/kanopi/security-report/main/collect-logs.sh)
+SITE_UUID=1a5b3e19-01af-4f19-ad34-abe5489370d0 bash <(curl -fsSL https://raw.githubusercontent.com/kanopi/security-reports/main/collect-logs.sh)
 ```
