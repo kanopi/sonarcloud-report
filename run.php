@@ -21,6 +21,7 @@ $sonarQubePass = $_ENV['SONARQUBE_PASS'];
 $sonarQubeProjects = explode(',', $_ENV['SONARQUBE_PROJECTS']);
 $sonarQubeReportDir = $_ENV['SONARQUBE_REPORT_DIR'] ?? './';
 $sonarQubeFile = $sonarQubeReportDir . ($_ENV['SONARQUBE_REPORT_FILE'] ?? 'report.pdf');
+$sonarQubeExtraParams = json_decode($_ENV['SONARQUBE_EXTRA_PARAMS'], true) ?? [];
 
 if (empty($sonarQubeHost) || empty($sonarQubeUser) || empty($sonarQubeProjects)) {
     echo "One of the following variables are not defined: SONARQUBE_HOST, SONARQUBE_USER, SONARQUBE_PROJECTS";
@@ -69,7 +70,7 @@ $filesystemLoader = new FilesystemLoader(__DIR__ . '/templates');
 $environment = new Environment($filesystemLoader);
 
 // Create SonarQube service.
-$sonarQube = SonarQube::create($sonarQubeHost, $sonarQubeUser, $sonarQubePass);
+$sonarQube = SonarQube::create($sonarQubeHost, $sonarQubeUser, $sonarQubePass, $sonarQubeExtraParams);
 
 $logger->info('Starting');
 

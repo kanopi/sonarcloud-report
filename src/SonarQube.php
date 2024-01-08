@@ -14,6 +14,11 @@ final class SonarQube
 {
 
     /**
+     * @var array
+     */
+    private array $extraParams = [];
+
+    /**
      * @var string[]
      */
     private const METRICS = [
@@ -49,7 +54,7 @@ final class SonarQube
      *
      * @return self
      */
-    public static function create(string $host, string $user, string $pass): self
+    public static function create(string $host, string $user, string $pass, array $extraParams = []): self
     {
         $client = new Client([
             'base_uri' => $host,
@@ -59,6 +64,7 @@ final class SonarQube
                 'Accept' => 'application/json',
             ]
         ]);
+        $client->extraParams = $extraParams;
         return new SonarQube($client);
     }
 
@@ -78,6 +84,7 @@ final class SonarQube
     private function query(string $endpoint, array $query = []): array
     {
         try {
+            $query = array_merge($query, ($this->extraParams[$endpoint] ?? []));
             $response = $this->client->get($endpoint, ['query' => $query]);
             return (array)json_decode($response->getBody(), true, 512, JSON_THROW_ON_ERROR);
         } catch (GuzzleException | JsonException $exception) {

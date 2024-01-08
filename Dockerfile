@@ -18,6 +18,13 @@ RUN set -xe; \
         unzip \
         zip
 
+ENV SONARQUBE_HOST=""
+ENV SONARQUBE_USER=""
+ENV SONARQUBE_PASS=""
+ENV SONARQUBE_PROJECTS=""
+ENV SONARQUBE_EXTRA_PARAMS=""
+ENV DEBUG_REPORT=""
+
 COPY --from=surnet/alpine-wkhtmltopdf:3.17.0-0.12.6-small \
     /bin/wkhtmltopdf /bin/wkhtmltopdf
 

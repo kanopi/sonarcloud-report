@@ -19,10 +19,10 @@ Running the docker image can be as simple as running the following:
 ```shell
 docker -it --rm \
   -v $(pwd):/mnt/reports \
-  -e SONARCLOUD_HOST="https://sonarcloud.io" \
-  -e SONARCLOUD_USER="user" \
-  -e SONARCLOUD_PASS="abc" \
-  -e SONARCLOUD_PROJECTS="project_test" \
+  -e SONARQUBE_HOST="https://sonarcloud.io" \
+  -e SONARQUBE_USER="user" \
+  -e SONARQUBE_PASS="abc" \
+  -e SONARQUBE_PROJECTS="project_test" \
   devkteam/sonarqube-report:latest
 ```
 
@@ -47,6 +47,7 @@ Environment variables can be used by either exporting them, or by using a `.env`
 | SONARQUBE_REPORT_IMAGE    | devkteam/sonarqube-report:latest     | Docker image name to use for generating the report                                                    |
 | CLEANUP                   | (blank)                              | If set will delete and remove all services after running                                              |
 | LOG_FILE                  | /tmp/sonarqube.log                   | Where should all output be sent to for reviewing                                                      |
+| SONARQUBE_EXTRA_PARAMS    | (blank)                              | JSON Structure where key is the endpoint. Additionally key 'global' is used for all requests.         |
 
 #### Using PHP Source
 
