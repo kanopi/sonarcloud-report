@@ -84,7 +84,7 @@ final class SonarQube
     private function query(string $endpoint, array $query = []): array
     {
         try {
-            $query = array_merge($query, ($this->extraParams[$endpoint] ?? []));
+            $query = array_merge($query, ($this->extraParams[$endpoint] ?? []), ($this->extraParams['global'] ?? []));
             $response = $this->client->get($endpoint, ['query' => $query]);
             return (array)json_decode($response->getBody(), true, 512, JSON_THROW_ON_ERROR);
         } catch (GuzzleException | JsonException $exception) {
