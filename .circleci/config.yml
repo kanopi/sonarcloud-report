@@ -158,6 +158,7 @@ workflows:
               ignore: /.*/
       - docker/publish:
           <<: *build-items
+          requires: []
           name: "Create new Version Tag"
           tag: '${CIRCLE_TAG}'
           filters:
@@ -167,6 +168,7 @@ workflows:
               only: /.*/
       - docker/publish:
           <<: *build-items
+          requires: []
           name: "Create Latest Tag"
           tag: 'latest'
           filters:
