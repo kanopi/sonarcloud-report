@@ -12,12 +12,6 @@ use JsonException;
  */
 final class SonarQube
 {
-
-    /**
-     * @var array
-     */
-    private array $extraParams = [];
-
     /**
      * @var string[]
      */
@@ -38,7 +32,7 @@ final class SonarQube
      * @param Client $client
      *   Guzzle Client.
      */
-    public function __construct(private readonly Client $client)
+    public function __construct(private readonly Client $client, private readonly array $extraParams = [])
     {
     }
 
@@ -64,8 +58,7 @@ final class SonarQube
                 'Accept' => 'application/json',
             ]
         ]);
-        $client->extraParams = $extraParams;
-        return new SonarQube($client);
+        return new SonarQube($client, $extraParams);
     }
 
     /**
