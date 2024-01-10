@@ -5,6 +5,7 @@ build-items: &build-items
   docker-username: DOCKERHUB_USER
   docker-password: DOCKERHUB_PASS
   context: kanopi-code
+  platform: linux/amd64,linux/arm64
   before_build:
     - run:
         name: Generate Build Tag
@@ -18,7 +19,7 @@ build-items: &build-items
 
 orbs:
   ci-tools: kanopi/ci-tools@2
-  docker: circleci/docker@2.2
+  docker: kanopi/docker@1
 
 jobs:
   phpunit:
@@ -120,7 +121,7 @@ workflows:
               ignore: /.*/
             branches:
               only: /.*/
-      - docker/publish:
+      - docker/publishx:
           <<: *build-items
           name: "Create edge version"
           tag: edge
@@ -129,7 +130,7 @@ workflows:
               only: main
             tags:
               ignore: /.*/
-      - docker/publish:
+      - docker/publishx:
           <<: *build-items
           name: "Create edge version"
           tag: "edge--${CIRCLE_SHA1:0:7}"
@@ -138,7 +139,7 @@ workflows:
               only: main
             tags:
               ignore: /.*/
-      - docker/publish:
+      - docker/publishx:
           <<: *build-items
           name: "Create build image"
           tag: 'build--${CUSTOM_BRANCH}--${CIRCLE_SHA1:0:7}'
@@ -147,7 +148,7 @@ workflows:
               ignore: main
             tags:
               ignore: /.*/
-      - docker/publish:
+      - docker/publishx:
           <<: *build-items
           name: "Create latest build image"
           tag: 'build--${CUSTOM_BRANCH}'
@@ -156,7 +157,7 @@ workflows:
               ignore: main
             tags:
               ignore: /.*/
-      - docker/publish:
+      - docker/publishx:
           <<: *build-items
           requires: []
           name: "Create new Version Tag"
@@ -166,7 +167,7 @@ workflows:
               ignore: /.*/
             tags:
               only: /.*/
-      - docker/publish:
+      - docker/publishx:
           <<: *build-items
           requires: []
           name: "Create Latest Tag"
