@@ -3,7 +3,7 @@
 ## SonarQube Report Generator
 
 The following uses the SonarQube API to build an exportable report based on 
-the items that are found within the scan. This works for both hosted solution 
+the items found within the scan. This works for both a hosted solution 
 and a local copy.
 
 ### Requirements
@@ -14,6 +14,12 @@ Docker is the only tool that is needed for this to run.
 
 #### Using the Docker Image
 
+Pull the latest docker image
+
+```shell
+docker pull devkteam/sonarqube-report:latest
+```
+
 Running the docker image can be as simple as running the following:
 
 ```shell
@@ -23,6 +29,22 @@ docker -it --rm \
   -e SONARQUBE_USER="user" \
   -e SONARQUBE_PASS="abc" \
   -e SONARQUBE_PROJECTS="project_test" \
+  devkteam/sonarqube-report:latest
+```
+
+When running the following to pull from Sonarcloud.io a Token will need to be created.
+
+Because some of the APIs are different than the local setup, an organization id is required
+for some of the endpoints. That can be passed in via the `SONARQUBE_EXTRA_PARAMS` variable.
+
+```
+docker run -it --rm \
+  -v $(pwd):/mnt/reports \
+  -e SONARQUBE_HOST="https://sonarcloud.io" \
+  -e SONARQUBE_USER="<TOKEN>" \
+  -e SONARQUBE_PASS="" \
+  -e SONARQUBE_PROJECTS="<PROJECT_ID>" \
+  -e SONARQUBE_EXTRA_PARAMS='{"global":{"organization":"<ORGANIZATION ID>"}}' \
   devkteam/sonarqube-report:latest
 ```
 
