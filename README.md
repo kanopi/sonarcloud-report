@@ -38,14 +38,18 @@ Because some of the APIs are different than the local setup, an organization id 
 for some of the endpoints. That can be passed in via the `SONARQUBE_EXTRA_PARAMS` variable.
 
 ```
+docker pull devkteam/sonarqube-report:latest
+export PROJECTID=<PROJECT_ID>
+export SCTOKEN=<TOKEN>
 docker run -it --rm \
   -v $(pwd):/mnt/reports \
   -e SONARQUBE_HOST="https://sonarcloud.io" \
-  -e SONARQUBE_USER="<TOKEN>" \
+  -e SONARQUBE_USER="$SCTOKEN" \
   -e SONARQUBE_PASS="" \
-  -e SONARQUBE_PROJECTS="<PROJECT_ID>" \
+  -e SONARQUBE_PROJECTS="$PROJECTID" \
   -e SONARQUBE_EXTRA_PARAMS='{"global":{"organization":"<ORGANIZATION ID>"}}' \
   devkteam/sonarqube-report:latest
+  
 ```
 
 ##### Environment Variables
