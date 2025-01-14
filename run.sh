@@ -179,12 +179,12 @@ pull_latest_images() {
 }
 
 check_status() {
-    echo-notice "Checking Sonarqube Status..."
+    echo-notice "Checking SonarQube Status..."
 
     IS_STARTED=$(sonarqube_running)
 
     if [[ "${IS_STARTED}" == "1" ]]; then
-        echo-warning "Sonarqube service already started. Remove other instance. (Y/N)?"
+        echo-warning "SonarQube service already started. Remove other instance. (Y/N)?"
         read remove_service
         remove_service=$(echo "${remove_service}" | tr '[:lower:]' '[:upper:]' | tr -d '[:blank:]')
         if [[ "${remove_service}" == "Y" ]] || [[ "${remove_service}" == "YES" ]]; then
