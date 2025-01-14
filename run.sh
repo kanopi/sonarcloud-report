@@ -273,9 +273,26 @@ create_project() {
 }
 
 run_scanner() {
-    echo-notice "Running Scanner..."
+    # Create The Volume
+    local VOLUME_NAME="scanner_${PROJECT_KEY}"
+    echo-notice "Deleting Older Volume ${VOLUME_NAME}..."
+    docker volume rm -f "${VOLUME_NAME}" >/dev/null 2>/dev/null || true
+    echo-notice "Creating Project Volume..."
+    docker volume create "${VOLUME_NAME}" >/dev/null
 
-    docker run --rm -it -v ${PROJECT_DIRECTORY}:/usr/src \
+    # Copy the Contents
+    echo-notice "Copying Project to Volume..."
+    docker rm -f "temp_${PROJECT_NAME}" 2>/dev/null || true
+    docker run --quiet -d --rm -it \
+        -v "${VOLUME_NAME}:/project" \
+        --name="temp_${PROJECT_NAME}" \
+        busybox > /dev/null
+    docker cp ${PROJECT_DIRECTORY} "temp_${PROJECT_NAME}":/project > /dev/null
+    docker rm -f "temp_${PROJECT_NAME}" >/dev/null
+
+    # Run the Scanner
+    echo-notice "Running Scanner..."
+    docker run -q --rm -it -v "${VOLUME_NAME}:/usr/src" \
         --link ${SERVICE_NAME} \
         ${SONARQUBE_CLI_IMAGE} \
         sonar-scanner \
