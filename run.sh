@@ -438,7 +438,7 @@ case "$1" in
             cleanup
         fi
 
-        echo-green-bg "Completed"
+        echo-green-bg " Completed "
         ;;
     help)
         usage
