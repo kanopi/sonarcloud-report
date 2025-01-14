@@ -301,6 +301,9 @@ run_scanner() {
         -Dsonar.host.url=${SONARQUBE_CLI_REMOTE_HOST} \
         -Dsonar.login="${USERNAME}" \
         -Dsonar.password="${PASSWORD}" > ${LOG_FILE}
+
+    # Remove volume
+    docker volume rm -f "${VOLUME_NAME}" >/dev/null 2>/dev/null || true
 }
 
 run_report() {
