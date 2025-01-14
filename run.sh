@@ -63,28 +63,28 @@ echo-green ()    { echo -e "${green}$1${NC}"; }
 echo-green-bg () { echo -e "${green_bg}$1${NC}"; }
 echo-yellow ()   { echo -e "${yellow}$1${NC}"; }
 
-echo-warning() {
-	echo -e "${yellow_bg} WARNING: ${NC} ${yellow}$1${NC}";
-	shift
+echo-colored() {
+    local bg_color=$1
+    local text=$2
+    local text_color=$3
+    local output=$4
+	echo -e "${bg_color} ${text} ${NC} ${text_color}${output}${NC}";
+	shift 4
 	for arg in "$@"; do
 		echo -e "           $arg"
 	done
 }
 
+echo-warning() {
+    echo-colored "${yellow_bg}" "WARN:  " "${yellow}" "$@"
+}
+
 echo-error() {
-	echo -e "${red_bg} ERROR: ${NC} ${red}$1${NC}"
-	shift
-	for arg in "$@"; do
-		echo -e "         $arg"
-	done
+    echo-colored "${red_bg}" "ERROR: " "${red}" "$@"
 }
 
 echo-notice() {
-	echo -e "${lightmagenta_bg} NOTICE: ${NC} ${lightmagenta}$1${NC}"
-	shift
-	for arg in "$@"; do
-		echo -e "         $arg"
-	done
+    echo-colored "${lightmagenta_bg}" "NOTICE:" "${lightmagenta}" "$@"
 }
 
 # print string in $1 for $2 times
