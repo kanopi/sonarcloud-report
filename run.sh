@@ -306,6 +306,15 @@ run_scanner() {
 run_report() {
     echo-notice "Generating Report..."
 
+    if [[ "${BUILD_REPORT_IMAGE}" == "1" ]]; then
+        CUSTOM_BUILD_IMAGE=${CUSTOM_BUILD_IMAGE:-"security_report_image"};
+        if [[ -f "${BUILD_REPORT_DIRECTORY:-.}/Dockerfile" ]]; then
+            echo-notice "Building Docker Image..."
+            docker build -q -t "${CUSTOM_BUILD_IMAGE}" ${BUILD_REPORT_DIRECTORY:-.} > /dev/null
+            SONARQUBE_REPORT_IMAGE="${CUSTOM_BUILD_IMAGE}"
+        fi
+    fi
+
     docker run --rm -it -v ${PROJECT_DIRECTORY}:/mnt/reports \
         --link ${SERVICE_NAME} \
         -e SONARQUBE_HOST=${SONARQUBE_CLI_REMOTE_HOST} \
