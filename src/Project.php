@@ -144,7 +144,7 @@ final class Project
     {
         if ($this->lastRun === '') {
             $response = $this->sonarQube->getProjectAnalyses($this->projectKey);
-            $this->lastRun = (string)$response['analyses'][0]['date'] ?? 0;
+            $this->lastRun = (string)$response['analyses'][0]['date'];
         }
 
         return $this->lastRun;
