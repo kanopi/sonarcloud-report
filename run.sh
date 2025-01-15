@@ -185,7 +185,7 @@ EOF
 }
 
 # Parse Options
-while getopts "cd:h:l:m:p:r:s:u:-:" OPT; do
+while getopts "ocd:f:h:l:m:p:r:s:u:-:" OPT; do
   # support long options: https://stackoverflow.com/a/28466267/519360
   if [ "$OPT" = "-" ]; then   # long option: reformulate OPT and OPTARG
     OPT="${OPTARG%%=*}"       # extract long option name
@@ -193,8 +193,10 @@ while getopts "cd:h:l:m:p:r:s:u:-:" OPT; do
     OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
   fi
   case $OPT in
+    o|open)               DEFAULT_OPEN_REPORT=true;;
     c|cleanup)            CLEANUP="1";;
     d|directory)          PROJECT_DIRECTORY="${OPTARG}";;
+    f|file)               SONARQUBE_REPORT_FILE_NAME="${OPTARG}";;
     h|host)               HOST="${OPTARG}";;
     k|project-key)        PROJECT_KEY=$(echo "${OPTARG}" | sed "s/[ |-]/_/g" | sed 's/[^a-zA-Z_]//g' | tr '[:upper:]' '[:lower:]');;
     l|log)                LOG_FILE="${OPTARG}";;
@@ -203,7 +205,8 @@ while getopts "cd:h:l:m:p:r:s:u:-:" OPT; do
     r|project)            PROJECT_NAME="${OPTARG}";;
     s|cli-remote-host)    SONARQUBE_CLI_REMOTE_HOST="${OPTARG}";;
     u|user)               USERNAME="${OPTARG}";;
-    ??* )                 echo-error "Illegal option --$OPT"; exit 2 ;;  # bad long option
+    help)                 default_usage; exit 0;;
+    ??* )                 echo-error "Illegal option --$OPT"; default_usage; exit 2 ;;  # bad long option
     ? )                   exit 2 ;;  # bad short option (error reported via getopts)
   esac
 done
