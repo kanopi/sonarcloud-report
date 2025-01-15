@@ -45,6 +45,8 @@ SONARQUBE_CLI_IMAGE=${SONARQUBE_CLI_IMAGE:-"devkteam/sonar-scanner-cli:latest"}
 SONARQUBE_REPORT_FILE_NAME=${SONARQUBE_REPORT_FILE_NAME:-"report.pdf"}
 CLEANUP=${CLEANUP}
 
+DEFAULT_OPEN_REPORT=false
+
 # Not Configurable
 PROJECT_KEY=${PROJECT_KEY:-$(echo "${PROJECT_NAME}" | sed "s/[ |-]/_/g" | sed 's/[^a-zA-Z_]//g' | tr '[:upper:]' '[:lower:]')}
 OLDPASS=admin
