@@ -57,9 +57,11 @@ final class RunReport
             if ($count >= $max_tries) {
                 return false;
             }
+
             sleep($sleep_time);
-            $count++;
+            ++$count;
         }
+
         return true;
     }
 

@@ -72,11 +72,11 @@ final class SonarQube
     public function isQueueEmpty(): bool {
         try {
             $response = $this->client->get('/api/analysis_reports/is_queue_empty');
-            return boolval($response->getBody());
+            return (bool) $response->getBody();
         } catch (GuzzleException | JsonException $exception) {
             throw new Exception(sprintf('ERROR: %s', $exception->getMessage()), $exception->getCode(), $exception);
         }
-        return false;
+
     }
 
     /**
