@@ -368,7 +368,8 @@ run_scanner() {
 
     # Run the Scanner
     echo-notice "Running Scanner..."
-    docker run -q --rm -it -v "${VOLUME_NAME}:/usr/src" \
+    echo-warning "This process can take a decent amount of time..."
+    docker run --rm -it -v "${VOLUME_NAME}:/usr/src" \
         --link ${SERVICE_NAME} \
         ${SONARQUBE_CLI_IMAGE} \
         sonar-scanner \
