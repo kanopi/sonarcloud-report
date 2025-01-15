@@ -117,6 +117,72 @@ if_failed_error() {
 	fi
 }
 
+default_usage() {
+  cat <<- EOF
+Run SonarQube reporting for the code.
+
+Usage:
+  $(basename $0) <options> <command>
+
+Options:
+  -c, --cleanup            Cleanup all the items after done running report.
+
+  -d, --directory          Directory to run the report in.
+                           (Default: ${PROJECT_DIRECTORY})
+
+  -h, --host               Hostname to access SonarQube data.
+                           (Default: ${HOST})
+
+  -k, --project-key        Project Key
+                           (Default: ${PROJECT_KEY})
+
+  -m, --max-tries          Max number of tries to check for remote host.
+                           (Default: ${MAX_TRIES})
+
+  -p, --password           Set the password for connecting to the instance of SonarQube/SonarCloud
+                           (Default: ${PASSWORD})
+
+  -r, --project            Set the project name
+                           (Default: ${PROJECT_NAME})
+
+  -s, --cli-remote-host    Set the remote host to connect to for the cli
+                           (Default: ${SONARQUBE_CLI_REMOTE_HOST})
+
+  -t, --port               Port to access SonarQube endpoint.
+                           (Default: ${PORT})
+
+  -o, --open               Open report after running.
+                           (Default: ${DEFAULT_OPEN_REPORT})
+
+  -f, --file               Report file name.
+                           (Default: ${SONARQUBE_REPORT_FILE_NAME})
+
+  --help                   Open Help
+
+Commands:
+  cleanup              Cleanup and remove all standing Docker containers.
+
+  run-report           Generate a report based on the latest scan from SonarQube.
+
+  run-scanner          Run the SonarQube CLI Scanner on the current code base. This is
+                       run in an isolated Docker container.
+
+  new-project          Create a new project, run the scanner, and generate the report necessary
+                       for the provided instance.
+
+  run                  Start the process from the beginning
+                       - Check if SonarQube Instance is running
+                       - Pull the latest version of Docker Images
+                       - Start SonarQube Service.
+                       - Change the password for first setup
+                       - Update the libraries for the instance
+                       - Create project on the SonarQube instance
+                       - Run the CLI scanner
+                       - Generate report
+
+EOF
+}
+
 # Parse Options
 while getopts "cd:h:l:m:p:r:s:u:-:" OPT; do
   # support long options: https://stackoverflow.com/a/28466267/519360
@@ -335,65 +401,6 @@ check_requirements() {
   $(which docker > /dev/null) || if_failed_error "Docker Binary not found"
 }
 
-usage() {
-  echo "\
-
-Run SonarQube reporting for the code.
-
-Usage:
-  $0 <options> <command>
-
-Options:
-  -c, --cleanup            Cleanup all the items after done running report.
-
-  -d, --directory          Directory to run the report in.
-                           (Default: ${PROJECT_DIRECTORY})
-
-  -h, --host               Hostname to access SonarQube data.
-                           (Default: ${HOST})
-
-  -k, --project-key        Project Key
-                           (Default: ${PROJECT_KEY})
-
-  -m, --max-tries          Max number of tries to check for remote host.
-                           (Default: ${MAX_TRIES})
-
-  -p, --password           Set the password for connecting to the instance of SonarQube/SonarCloud
-                           (Default: ${PASSWORD})
-
-  -r, --project            Set the project name
-                           (Default: ${PROJECT_NAME})
-
-  -s, --cli-remote-host    Set the remote host to connect to for the cli
-                           (Default: ${SONARQUBE_CLI_REMOTE_HOST})
-
-  -t, --port               Port to access SonarQube endpoint.
-                           (Default: ${PORT})
-
-Commands:
-  cleanup              Cleanup and remove all standing Docker containers.
-
-  run-report           Generate a report based on the latest scan from SonarQube.
-
-  run-scanner          Run the SonarQube CLI Scanner on the current code base. This is
-                       run in an isolated Docker container.
-
-  new-project          Create a new project, run the scanner, and generate the report necessary
-                       for the provided instance.
-
-  run                  Start the process from the beginning
-                       - Check if SonarQube Instance is running
-                       - Pull the latest version of Docker Images
-                       - Start SonarQube Service.
-                       - Change the password for first setup
-                       - Update the libraries for the instance
-                       - Create project on the SonarQube instance
-                       - Run the CLI scanner
-                       - Generate report
-
-"
-}
-
 check_requirements
 
 # Execute subcommands
@@ -448,10 +455,10 @@ case "$1" in
         echo-green-bg " Completed "
         ;;
     help)
-        usage
+        default_usage
         ;;
     *)
-        usage
+        default_usage
         echo-error "Command: ${1} not supported"
         exit 1
         ;;
