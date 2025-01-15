@@ -1,5 +1,4 @@
-FROM php:8.1-cli-alpine
-MAINTAINER Sean Dietrich <sean@kanopi.com>
+FROM php:8.3-cli-alpine
 
 RUN set -xe; \
       apk add --update --no-cache \
