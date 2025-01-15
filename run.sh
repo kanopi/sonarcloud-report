@@ -382,6 +382,37 @@ run_scanner() {
     docker volume rm -f "${VOLUME_NAME}" >/dev/null 2>/dev/null || true
 }
 
+validate_report() {
+    echo-notice "Confirming Report Exists"
+    if [ ! -f "${PROJECT_DIRECTORY}/${SONARQUBE_REPORT_FILE_NAME}" ]; then
+        echo-error "${SONARQUBE_REPORT_FILE_NAME} not found"
+    else
+        echo-success "${SONARQUBE_REPORT_FILE_NAME} found"
+        ask_open_report
+    fi
+}
+
+# Open the report
+open_report () {
+    if [ "$(which open)" != "" ]; then
+        open "${PROJECT_DIRECTORY}/${SONARQUBE_REPORT_FILE_NAME}"
+    fi
+}
+
+# Ask if the person would like to open the report
+ask_open_report() {
+    if [ ! $DEFAULT_OPEN_REPORT ]; then
+        echo-warning "Open Report? (Y/N)"
+        read open_report
+        local open_report=$(echo "${open_report}" | tr '[:lower:]' '[:upper:]' | tr -d '[:blank:]')
+        if [[ "${open_report}" == "Y" ]] || [[ "${open_report}" == "YES" ]]; then
+            open_report
+        fi
+    else
+        open_report
+    fi
+}
+
 run_report() {
     echo-notice "Generating Report..."
 
@@ -402,6 +433,8 @@ run_report() {
         -e SONARQUBE_PROJECTS="${PROJECT_KEY}" \
         -e SONARQUBE_REPORT_FILE="${SONARQUBE_REPORT_FILE_NAME}" \
         ${SONARQUBE_REPORT_IMAGE}
+
+    validate_report
 }
 
 check_requirements() {
