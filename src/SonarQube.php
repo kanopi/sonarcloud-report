@@ -62,6 +62,24 @@ final class SonarQube
     }
 
     /**
+     * Check if the project analysis queue is empty.
+     *
+     * @return bool
+     *   If queue is empty.
+     *
+     * @throws Exception
+     */
+    public function isQueueEmpty(): bool {
+        try {
+            $response = $this->client->get('/api/analysis_reports/is_queue_empty');
+            return boolval($response->getBody());
+        } catch (GuzzleException | JsonException $exception) {
+            throw new Exception(sprintf('ERROR: %s', $exception->getMessage()), $exception->getCode(), $exception);
+        }
+        return false;
+    }
+
+    /**
      * Query the endpoint.
      *
      * @param string $endpoint
