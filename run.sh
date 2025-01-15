@@ -68,7 +68,7 @@ echo-colored() {
     local text=$2
     local text_color=$3
     local output=$4
-	echo -e "${bg_color} ${text} ${NC} ${text_color}${output}${NC}";
+	echo -e "${bg_color} ${text} ${NC}\t${text_color}${output}${NC}";
 	shift 4
 	for arg in "$@"; do
 		echo -e "           $arg"
@@ -76,15 +76,19 @@ echo-colored() {
 }
 
 echo-warning() {
-    echo-colored "${yellow_bg}" "WARN:  " "${yellow}" "$@"
+    echo-colored "${yellow_bg}" "WARN" "${yellow}" "$@"
 }
 
 echo-error() {
-    echo-colored "${red_bg}" "ERROR: " "${red}" "$@"
+    echo-colored "${red_bg}" "ERROR" "${red}" "$@"
 }
 
 echo-notice() {
-    echo-colored "${lightmagenta_bg}" "NOTICE:" "${lightmagenta}" "$@"
+    echo-colored "${lightmagenta_bg}" "NOTICE" "${lightmagenta}" "$@"
+}
+
+echo-success() {
+    echo-colored "${green_bg}" "SUCCESS" "${green}" "$@"
 }
 
 # print string in $1 for $2 times
