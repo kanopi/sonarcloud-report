@@ -399,6 +399,7 @@ run_report() {
 
 check_requirements() {
   $(which docker > /dev/null) || if_failed_error "Docker Binary not found"
+  $(docker ps > /dev/null) || if_failed_error "Docker not running"
 }
 
 check_requirements
