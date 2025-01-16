@@ -27,6 +27,15 @@ final class SonarQube
     ];
 
     /**
+     * @var string[]
+     */
+    private const STATUS = [
+        'IN_PROGRESS',
+        'SUCCESS',
+        'FAILED'
+    ];
+
+    /**
      * Constructor
      *
      * @param Client $client
@@ -101,6 +110,43 @@ final class SonarQube
         } catch (GuzzleException | JsonException $exception) {
             throw new Exception(sprintf('ERROR: %s', $exception->getMessage()), $exception->getCode(), $exception);
         }
+    }
+
+    /**
+     * Get Activities for all activity statuses.
+     *
+     * @param string $project
+     *   Project key to look up.
+     *
+     * @return array
+     *   List of all project statuses keyed by pending, failing, and inProgress.
+     */
+    public function getActivityStatus(string $project): array
+    {
+        return $this->query('/api/ce/activity_status', [
+            'component' => $project,
+        ]);
+    }
+
+    /**
+     * Get Activities for all components.
+     *
+     * @param string $project
+     *   Project key to look up.
+     * @param array $status
+     *   Status items to look up.
+     *
+     * @return array
+     *   List of Activities.
+     */
+    public function getActivities(string $project, array $status = []): array {
+        $status = $status === [] ? self::STATUS : $status;
+        return $this->query('/api/ce/activity', [
+            'component' => $project,
+            'status' => implode(',', $status),
+            'ps' => 500,
+            'ps' => 1,
+        ]);
     }
 
     /**
