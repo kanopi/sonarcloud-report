@@ -51,7 +51,7 @@ final class RunReport
      * @return bool
      *   Is queue empty.
      */
-    private function checkProjectAnalysisQueue(int $sleep_time = 10, int $max_tries = 6): bool
+    private function checkProjectAnalysisQueue(int $sleep_time = 15, int $max_tries = 40): bool
     {
         $count = 0;
         while (!$this->sonarQube->isQueueEmpty()) {
@@ -59,6 +59,7 @@ final class RunReport
                 return false;
             }
 
+            $this->logger->info(sprintf('Checking again in %s seconds', $sleep_time));
             sleep($sleep_time);
             ++$count;
         }
@@ -94,6 +95,7 @@ final class RunReport
             $data[$project] = new Project($this->sonarQube, $project);
         }
 
+        // This checks the whole queue.
         $this->logger->info('Checking Project Analysis Queue');
         $response = $this->checkProjectAnalysisQueue();
         if (!$response) {
