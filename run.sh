@@ -80,15 +80,15 @@ echo-colored() {
 }
 
 echo-warning() {
-    echo-colored "${yellow_bg}" "WARN" "${yellow}" "$@"
+    echo-colored "${yellow_bg}" "WARNING" "${yellow}" "$@"
 }
 
 echo-error() {
-    echo-colored "${red_bg}" "ERROR" "${red}" "$@"
+    echo-colored "${red_bg}" "ERROR  " "${red}" "$@"
 }
 
 echo-notice() {
-    echo-colored "${lightmagenta_bg}" "NOTICE" "${lightmagenta}" "$@"
+    echo-colored "${lightmagenta_bg}" "NOTICE " "${lightmagenta}" "$@"
 }
 
 echo-success() {
