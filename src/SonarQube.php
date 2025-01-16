@@ -139,13 +139,14 @@ final class SonarQube
      * @return array
      *   List of Activities.
      */
-    public function getActivities(string $project, array $status = []): array {
+    public function getActivities(string $project, array $status = []): array
+    {
         $status = $status === [] ? self::STATUS : $status;
         return $this->query('/api/ce/activity', [
             'component' => $project,
             'status' => implode(',', $status),
             'ps' => 500,
-            'ps' => 1,
+            'p' => 1,
         ]);
     }
 
