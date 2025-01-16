@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 
 set -e
+set -o pipefail
 
 if [[ "${DEBUG}" != "" ]]; then
-    set -ex
+    set -x
 fi
 
 #### VARIABLES
@@ -42,7 +43,10 @@ SONARQUBE_CLI_REMOTE_HOST=${SONARQUBE_CLI_REMOTE_HOST:-"http://${SERVICE_NAME}:9
 SONARQUBE_SERVICE_IMAGE=${SONARQUBE_SERVICE_IMAGE:-"sonarqube:9-community"}
 SONARQUBE_REPORT_IMAGE=${SONARQUBE_REPORT_IMAGE:-"devkteam/sonarqube-report:latest"}
 SONARQUBE_CLI_IMAGE=${SONARQUBE_CLI_IMAGE:-"devkteam/sonar-scanner-cli:latest"}
+SONARQUBE_REPORT_FILE_NAME=${SONARQUBE_REPORT_FILE_NAME:-"report.pdf"}
 CLEANUP=${CLEANUP}
+
+DEFAULT_OPEN_REPORT=false
 
 # Not Configurable
 PROJECT_KEY=${PROJECT_KEY:-$(echo "${PROJECT_NAME}" | sed "s/[ |-]/_/g" | sed 's/[^a-zA-Z_]//g' | tr '[:upper:]' '[:lower:]')}
@@ -63,28 +67,32 @@ echo-green ()    { echo -e "${green}$1${NC}"; }
 echo-green-bg () { echo -e "${green_bg}$1${NC}"; }
 echo-yellow ()   { echo -e "${yellow}$1${NC}"; }
 
-echo-warning() {
-	echo -e "${yellow_bg} WARNING: ${NC} ${yellow}$1${NC}";
-	shift
+echo-colored() {
+    local bg_color=$1
+    local text=$2
+    local text_color=$3
+    local output=$4
+	echo -e "${bg_color} ${text} ${NC}\t${text_color}${output}${NC}";
+	shift 4
 	for arg in "$@"; do
 		echo -e "           $arg"
 	done
 }
 
+echo-warning() {
+    echo-colored "${yellow_bg}" "WARNING" "${yellow}" "$@"
+}
+
 echo-error() {
-	echo -e "${red_bg} ERROR: ${NC} ${red}$1${NC}"
-	shift
-	for arg in "$@"; do
-		echo -e "         $arg"
-	done
+    echo-colored "${red_bg}" "ERROR  " "${red}" "$@"
 }
 
 echo-notice() {
-	echo -e "${lightmagenta_bg} NOTICE: ${NC} ${lightmagenta}$1${NC}"
-	shift
-	for arg in "$@"; do
-		echo -e "         $arg"
-	done
+    echo-colored "${lightmagenta_bg}" "NOTICE " "${lightmagenta}" "$@"
+}
+
+echo-success() {
+    echo-colored "${green_bg}" "SUCCESS" "${green}" "$@"
 }
 
 # print string in $1 for $2 times
@@ -113,8 +121,74 @@ if_failed_error() {
 	fi
 }
 
+default_usage() {
+  cat <<- EOF
+Run SonarQube reporting for the code.
+
+Usage:
+  $(basename $0) <options> <command>
+
+Options:
+  -c, --cleanup            Cleanup all the items after done running report.
+
+  -d, --directory          Directory to run the report in.
+                           (Default: ${PROJECT_DIRECTORY})
+
+  -h, --host               Hostname to access SonarQube data.
+                           (Default: ${HOST})
+
+  -k, --project-key        Project Key
+                           (Default: ${PROJECT_KEY})
+
+  -m, --max-tries          Max number of tries to check for remote host.
+                           (Default: ${MAX_TRIES})
+
+  -p, --password           Set the password for connecting to the instance of SonarQube/SonarCloud
+                           (Default: ${PASSWORD})
+
+  -r, --project            Set the project name
+                           (Default: ${PROJECT_NAME})
+
+  -s, --cli-remote-host    Set the remote host to connect to for the cli
+                           (Default: ${SONARQUBE_CLI_REMOTE_HOST})
+
+  -t, --port               Port to access SonarQube endpoint.
+                           (Default: ${PORT})
+
+  -o, --open               Open report after running.
+                           (Default: ${DEFAULT_OPEN_REPORT})
+
+  -f, --file               Report file name.
+                           (Default: ${SONARQUBE_REPORT_FILE_NAME})
+
+  --help                   Open Help
+
+Commands:
+  cleanup              Cleanup and remove all standing Docker containers.
+
+  run-report           Generate a report based on the latest scan from SonarQube.
+
+  run-scanner          Run the SonarQube CLI Scanner on the current code base. This is
+                       run in an isolated Docker container.
+
+  new-project          Create a new project, run the scanner, and generate the report necessary
+                       for the provided instance.
+
+  run                  Start the process from the beginning
+                       - Check if SonarQube Instance is running
+                       - Pull the latest version of Docker Images
+                       - Start SonarQube Service.
+                       - Change the password for first setup
+                       - Update the libraries for the instance
+                       - Create project on the SonarQube instance
+                       - Run the CLI scanner
+                       - Generate report
+
+EOF
+}
+
 # Parse Options
-while getopts "cd:h:l:m:p:r:s:u:-:" OPT; do
+while getopts "ocd:f:h:l:m:p:r:s:u:-:" OPT; do
   # support long options: https://stackoverflow.com/a/28466267/519360
   if [ "$OPT" = "-" ]; then   # long option: reformulate OPT and OPTARG
     OPT="${OPTARG%%=*}"       # extract long option name
@@ -122,8 +196,10 @@ while getopts "cd:h:l:m:p:r:s:u:-:" OPT; do
     OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
   fi
   case $OPT in
+    o|open)               DEFAULT_OPEN_REPORT=true;;
     c|cleanup)            CLEANUP="1";;
     d|directory)          PROJECT_DIRECTORY="${OPTARG}";;
+    f|file)               SONARQUBE_REPORT_FILE_NAME="${OPTARG}";;
     h|host)               HOST="${OPTARG}";;
     k|project-key)        PROJECT_KEY=$(echo "${OPTARG}" | sed "s/[ |-]/_/g" | sed 's/[^a-zA-Z_]//g' | tr '[:upper:]' '[:lower:]');;
     l|log)                LOG_FILE="${OPTARG}";;
@@ -132,7 +208,8 @@ while getopts "cd:h:l:m:p:r:s:u:-:" OPT; do
     r|project)            PROJECT_NAME="${OPTARG}";;
     s|cli-remote-host)    SONARQUBE_CLI_REMOTE_HOST="${OPTARG}";;
     u|user)               USERNAME="${OPTARG}";;
-    ??* )                 echo-error "Illegal option --$OPT"; exit 2 ;;  # bad long option
+    help)                 default_usage; exit 0;;
+    ??* )                 echo-error "Illegal option --$OPT"; default_usage; exit 2 ;;  # bad long option
     ? )                   exit 2 ;;  # bad short option (error reported via getopts)
   esac
 done
@@ -179,12 +256,12 @@ pull_latest_images() {
 }
 
 check_status() {
-    echo-notice "Checking Sonarqube Status..."
+    echo-notice "Checking SonarQube Status..."
 
     IS_STARTED=$(sonarqube_running)
 
     if [[ "${IS_STARTED}" == "1" ]]; then
-        echo-warning "Sonarqube service already started. Remove other instance. (Y/N)?"
+        echo-warning "SonarQube service already started. Remove other instance. (Y/N)?"
         read remove_service
         remove_service=$(echo "${remove_service}" | tr '[:lower:]' '[:upper:]' | tr -d '[:blank:]')
         if [[ "${remove_service}" == "Y" ]] || [[ "${remove_service}" == "YES" ]]; then
@@ -273,9 +350,27 @@ create_project() {
 }
 
 run_scanner() {
-    echo-notice "Running Scanner..."
+    # Create The Volume
+    local VOLUME_NAME="scanner_${PROJECT_KEY}"
+    echo-notice "Deleting Older Volume ${VOLUME_NAME}..."
+    docker volume rm -f "${VOLUME_NAME}" >/dev/null 2>/dev/null || true
+    echo-notice "Creating Project Volume..."
+    docker volume create "${VOLUME_NAME}" >/dev/null
 
-    docker run --rm -it -v ${PROJECT_DIRECTORY}:/usr/src \
+    # Copy the Contents
+    echo-notice "Copying Project to Volume..."
+    docker rm -f "temp_${PROJECT_NAME}" 2>/dev/null || true
+    docker run --quiet -d --rm -it \
+        -v "${VOLUME_NAME}:/project" \
+        --name="temp_${PROJECT_NAME}" \
+        busybox > /dev/null
+    docker cp ${PROJECT_DIRECTORY} "temp_${PROJECT_NAME}":/project > /dev/null
+    docker rm -f "temp_${PROJECT_NAME}" >/dev/null
+
+    # Run the Scanner
+    echo-notice "Running Scanner..."
+    echo-warning "This process can take a decent amount of time..."
+    docker run --rm -it -v "${VOLUME_NAME}:/usr/src" \
         --link ${SERVICE_NAME} \
         ${SONARQUBE_CLI_IMAGE} \
         sonar-scanner \
@@ -284,10 +379,53 @@ run_scanner() {
         -Dsonar.host.url=${SONARQUBE_CLI_REMOTE_HOST} \
         -Dsonar.login="${USERNAME}" \
         -Dsonar.password="${PASSWORD}" > ${LOG_FILE}
+
+    # Remove volume
+    docker volume rm -f "${VOLUME_NAME}" >/dev/null 2>/dev/null || true
+}
+
+validate_report() {
+    echo-notice "Confirming Report Exists"
+    if [ ! -f "${PROJECT_DIRECTORY}/${SONARQUBE_REPORT_FILE_NAME}" ]; then
+        echo-error "${SONARQUBE_REPORT_FILE_NAME} not found"
+    else
+        echo-success "${SONARQUBE_REPORT_FILE_NAME} found"
+        ask_open_report
+    fi
+}
+
+# Open the report
+open_report () {
+    if [ "$(which open)" != "" ]; then
+        open "${PROJECT_DIRECTORY}/${SONARQUBE_REPORT_FILE_NAME}"
+    fi
+}
+
+# Ask if the person would like to open the report
+ask_open_report() {
+    if [ ! $DEFAULT_OPEN_REPORT ]; then
+        echo-warning "Open Report? (Y/N)"
+        read open_report
+        local open_report=$(echo "${open_report}" | tr '[:lower:]' '[:upper:]' | tr -d '[:blank:]')
+        if [[ "${open_report}" == "Y" ]] || [[ "${open_report}" == "YES" ]]; then
+            open_report
+        fi
+    else
+        open_report
+    fi
 }
 
 run_report() {
     echo-notice "Generating Report..."
+
+    if [[ "${BUILD_REPORT_IMAGE}" == "1" ]]; then
+        CUSTOM_BUILD_IMAGE=${CUSTOM_BUILD_IMAGE:-"security_report_image"};
+        if [[ -f "${BUILD_REPORT_DIRECTORY:-.}/Dockerfile" ]]; then
+            echo-notice "Building Docker Image..."
+            docker build -q -t "${CUSTOM_BUILD_IMAGE}" ${BUILD_REPORT_DIRECTORY:-.} > /dev/null
+            SONARQUBE_REPORT_IMAGE="${CUSTOM_BUILD_IMAGE}"
+        fi
+    fi
 
     docker run --rm -it -v ${PROJECT_DIRECTORY}:/mnt/reports \
         --link ${SERVICE_NAME} \
@@ -295,70 +433,15 @@ run_report() {
         -e SONARQUBE_USER="${USERNAME}" \
         -e SONARQUBE_PASS="${PASSWORD}" \
         -e SONARQUBE_PROJECTS="${PROJECT_KEY}" \
+        -e SONARQUBE_REPORT_FILE="${SONARQUBE_REPORT_FILE_NAME}" \
         ${SONARQUBE_REPORT_IMAGE}
+
+    validate_report
 }
 
 check_requirements() {
   $(which docker > /dev/null) || if_failed_error "Docker Binary not found"
-}
-
-usage() {
-  echo "\
-
-Run SonarQube reporting for the code.
-
-Usage:
-  $0 <options> <command>
-
-Options:
-  -c, --cleanup            Cleanup all the items after done running report.
-
-  -d, --directory          Directory to run the report in.
-                           (Default: ${PROJECT_DIRECTORY})
-
-  -h, --host               Hostname to access SonarQube data.
-                           (Default: ${HOST})
-
-  -k, --project-key        Project Key
-                           (Default: ${PROJECT_KEY})
-
-  -m, --max-tries          Max number of tries to check for remote host.
-                           (Default: ${MAX_TRIES})
-
-  -p, --password           Set the password for connecting to the instance of SonarQube/SonarCloud
-                           (Default: ${PASSWORD})
-
-  -r, --project            Set the project name
-                           (Default: ${PROJECT_NAME})
-
-  -s, --cli-remote-host    Set the remote host to connect to for the cli
-                           (Default: ${SONARQUBE_CLI_REMOTE_HOST})
-
-  -t, --port               Port to access SonarQube endpoint.
-                           (Default: ${PORT})
-
-Commands:
-  cleanup              Cleanup and remove all standing Docker containers.
-
-  run-report           Generate a report based on the latest scan from SonarQube.
-
-  run-scanner          Run the SonarQube CLI Scanner on the current code base. This is
-                       run in an isolated Docker container.
-
-  new-project          Create a new project, run the scanner, and generate the report necessary
-                       for the provided instance.
-
-  run                  Start the process from the beginning
-                       - Check if SonarQube Instance is running
-                       - Pull the latest version of Docker Images
-                       - Start SonarQube Service.
-                       - Change the password for first setup
-                       - Update the libraries for the instance
-                       - Create project on the SonarQube instance
-                       - Run the CLI scanner
-                       - Generate report
-
-"
+  $(docker ps > /dev/null) || if_failed_error "Docker not running"
 }
 
 check_requirements
@@ -391,7 +474,7 @@ case "$1" in
             cleanup
         fi
 
-        echo-green-bg "Completed"
+        echo-green-bg " Completed "
         ;;
     start)
         check_status
@@ -412,13 +495,13 @@ case "$1" in
             cleanup
         fi
 
-        echo-green-bg "Completed"
+        echo-green-bg " Completed "
         ;;
     help)
-        usage
+        default_usage
         ;;
     *)
-        usage
+        default_usage
         echo-error "Command: ${1} not supported"
         exit 1
         ;;

@@ -24,7 +24,7 @@ orbs:
 jobs:
   phpunit:
     docker:
-      - image: cimg/php:8.1
+      - image: cimg/php:8.3
         auth:
           username: $DOCKERHUB_USER
           password: $DOCKERHUB_PASS
@@ -92,7 +92,7 @@ workflows:
             branches:
               ignore: main
       - ci-tools/composer:
-          tag: '8.1'
+          tag: '8.3'
           name: 'phpstan'
           context: kanopi-code
           command: 'check:security'
@@ -102,7 +102,7 @@ workflows:
             branches:
               only: /.*/
       - ci-tools/composer:
-          tag: '8.1'
+          tag: '8.3'
           name: 'rector'
           context: kanopi-code
           command: 'check:rector'
@@ -112,7 +112,7 @@ workflows:
             branches:
               only: /.*/
       - ci-tools/composer:
-          tag: '8.1'
+          tag: '8.3'
           name: 'lint'
           context: kanopi-code
           command: 'check:code'

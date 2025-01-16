@@ -41,6 +41,33 @@ final class RunReport
     }
 
     /**
+     * Check the project queue to ensure it's empty.
+     *
+     * @param int $sleep_time
+     *   Default sleep time amount.
+     * @param int $max_tries
+     *   Max number of tries to check.
+     *
+     * @return bool
+     *   Is queue empty.
+     */
+    private function checkProjectAnalysisQueue(int $sleep_time = 15, int $max_tries = 40): bool
+    {
+        $count = 0;
+        while (!$this->sonarQube->isQueueEmpty()) {
+            if ($count >= $max_tries) {
+                return false;
+            }
+
+            $this->logger->info(sprintf('Checking again in %s seconds', $sleep_time));
+            sleep($sleep_time);
+            ++$count;
+        }
+
+        return true;
+    }
+
+    /**
      * Create the report for the given list of projects.
      *
      * @param string|string[] $projects
@@ -66,6 +93,14 @@ final class RunReport
         // Loop through all the requested projects and create new classes.
         foreach ($projects as $project) {
             $data[$project] = new Project($this->sonarQube, $project);
+        }
+
+        // This checks the whole queue.
+        $this->logger->info('Checking Project Analysis Queue');
+        $response = $this->checkProjectAnalysisQueue();
+        if (!$response) {
+            $this->logger->error('Error: Project queue is not empty.');
+            return false;
         }
 
         $this->logger->info('Creating Summary for Project', $projects);
